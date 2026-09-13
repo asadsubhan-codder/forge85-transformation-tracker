@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="A private, device-local fitness, nutrition, posture, and consistency tracker.">
+  <meta name="description" content="A private, cloud-synced fitness, nutrition, posture, and consistency tracker.">
   <meta name="theme-color" content="#080b0a">
   <title>Forge 85 — Transformation Tracker</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%23080b0a'/%3E%3Cpath d='M16 18h34v8H26v8h19v8H26v16H16z' fill='%23ff6b2c'/%3E%3Ccircle cx='49' cy='49' r='7' fill='%2334d399'/%3E%3C/svg%3E">
@@ -40,6 +40,8 @@
     .tab-button:hover { color:#fff; background:#151c18; } .tab-button.active { color:#fff; background:#202a25; box-shadow:inset 0 0 0 1px #344239; }
     .mobile-tab.active { color:#ff8956; }
     .status-dot { width:8px; height:8px; border-radius:50%; background:#34d399; box-shadow:0 0 14px rgba(52,211,153,.8); }
+    .status-dot.syncing { background:#ff8956; box-shadow:0 0 14px rgba(255,137,86,.75); }
+    .status-dot.offline { background:#94a3b8; box-shadow:none; }
     .progress-track { height:12px; overflow:hidden; border-radius:999px; background:#202823; border:1px solid #2c3932; }
     .progress-fill { height:100%; width:0; border-radius:inherit; background:linear-gradient(90deg,#ff6b2c,#ff9b5f); box-shadow:0 0 24px rgba(255,107,44,.35); transition:width .45s ease; }
     .calorie-ring { width:156px; height:156px; border-radius:50%; display:grid; place-items:center; background:conic-gradient(#34d399 var(--ring,0%),#202823 0); position:relative; }
@@ -87,7 +89,7 @@
         <button class="tab-button" data-tab="mindset">Mindset</button>
       </nav>
       <div class="flex items-center gap-2">
-        <span class="hidden items-center gap-2 text-sm font-bold text-[#9aa69f] sm:flex"><span class="status-dot"></span>Device saved</span>
+        <span class="hidden items-center gap-2 text-sm font-bold text-[#9aa69f] sm:flex"><span id="syncDot" class="status-dot syncing"></span><span id="syncLabel">Connecting…</span></span>
         <button id="openSettings" class="btn btn-ghost !h-11 !w-11 !p-0" aria-label="Open settings" title="Settings">
           <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06A1.7 1.7 0 0 0 15 19.37a1.7 1.7 0 0 0-1 .63 1.7 1.7 0 0 0-.37 1.06V21h-4v-.09A1.7 1.7 0 0 0 8.6 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.23 15a1.7 1.7 0 0 0-.63-1 1.7 1.7 0 0 0-1.06-.37H2.5v-4h.09A1.7 1.7 0 0 0 4.1 8.6a1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 8.5 4.23a1.7 1.7 0 0 0 1-.63 1.7 1.7 0 0 0 .37-1.06V2.5h4v.09A1.7 1.7 0 0 0 14.9 4.1a1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.77 8.5c.16.38.4.72.72.98.3.25.68.39 1.07.39h.09v4h-.09a1.7 1.7 0 0 0-1.06.37c-.46.36-.73.9-.73 1.48Z"/></svg>
         </button>
@@ -315,11 +317,12 @@
 
   <dialog id="settingsDialog" aria-labelledby="settingsDialogTitle">
     <form id="settingsForm" class="max-h-[88vh] overflow-y-auto p-6 md:p-7">
-      <div class="flex items-start justify-between gap-3"><div><p class="eyebrow">Local profile</p><h2 id="settingsDialogTitle" class="mt-1 text-2xl font-black">Tracker settings</h2></div><button type="button" class="btn btn-ghost !h-10 !w-10 !p-0" data-close-dialog aria-label="Close">×</button></div>
+      <div class="flex items-start justify-between gap-3"><div><p class="eyebrow">Personal profile</p><h2 id="settingsDialogTitle" class="mt-1 text-2xl font-black">Tracker settings</h2></div><button type="button" class="btn btn-ghost !h-10 !w-10 !p-0" data-close-dialog aria-label="Close">×</button></div>
       <div class="mt-6 grid gap-4 sm:grid-cols-2"><label class="text-sm font-bold text-[#aab4af]">Starting weight (kg)<input id="settingStartWeight" class="input mt-2" type="number" min="35" max="300" step="0.1" required></label><label class="text-sm font-bold text-[#aab4af]">Target weight (kg)<input id="settingTargetWeight" class="input mt-2" type="number" min="35" max="300" step="0.1" required></label><label class="text-sm font-bold text-[#aab4af]">Starting body fat estimate (%)<input id="settingBodyFat" class="input mt-2" type="number" min="3" max="70" step="0.1" required></label><label class="text-sm font-bold text-[#aab4af]">Logging budget (kcal)<input id="settingCalories" class="input mt-2" type="number" min="1200" max="6000" step="10" required></label><label class="text-sm font-bold text-[#aab4af] sm:col-span-2">Daily step minimum<input id="settingStepGoal" class="input mt-2" type="number" min="1000" max="50000" step="500" required></label></div>
       <label class="mt-4 block text-sm font-bold text-[#aab4af]">Why I started<textarea id="settingWhy" class="input mt-2 min-h-32 resize-y" maxlength="300" required></textarea></label>
+      <div class="mt-5 rounded-2xl border border-[#2a3530] bg-[#0b100d] p-4"><div class="flex items-center gap-2"><span class="status-dot"></span><strong>Universal sync</strong></div><p class="mt-2 text-sm leading-6 text-[#87948d]">Use your private link on another device to load the same progress. Anyone with that link can control this tracker, so keep it private.</p><div class="mt-3 flex flex-col gap-2 sm:flex-row"><button id="copySyncLink" class="btn btn-secondary flex-1" type="button">Copy private link</button><button id="syncNow" class="btn btn-ghost" type="button">Sync now</button></div></div>
       <div class="mt-6 flex flex-col gap-2 sm:flex-row"><button class="btn btn-primary flex-1" type="submit">Save settings</button><button id="exportData" class="btn btn-ghost" type="button">Export</button><label class="btn btn-ghost cursor-pointer">Import<input id="importData" class="sr-only" type="file" accept="application/json"></label></div>
-      <div class="mt-6 border-t border-[#2a3530] pt-5"><p class="text-sm leading-6 text-[#87948d]">Everything is stored only in this browser. Export a backup before clearing browser data or changing devices.</p><button id="resetData" class="btn btn-danger mt-4 w-full" type="button">Reset all tracker data</button></div>
+      <div class="mt-6 border-t border-[#2a3530] pt-5"><p class="text-sm leading-6 text-[#87948d]">Your signed-in data syncs across devices. Export is still useful as a personal backup.</p><button id="resetData" class="btn btn-danger mt-4 w-full" type="button">Reset all tracker data</button></div>
     </form>
   </dialog>
 
@@ -329,6 +332,10 @@
   (() => {
     'use strict';
     const STORAGE_KEY = 'forge85_tracker_v1';
+    const CACHE_KEY = 'forge85_cloud_cache_v2';
+    const SYNC_TOKEN_KEY = 'forge85_private_sync_token_v1';
+    const DIRTY_KEY = 'forge85_cloud_dirty_v1';
+    const SYNC_API = 'https://mantledb.sh/v2';
     const todayKey = () => { const d=new Date(); return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-'); };
     const dateKeyFromOffset = offset => { const d=new Date(); d.setDate(d.getDate()+offset); return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-'); };
     const uid = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36)+Math.random().toString(36).slice(2));
@@ -411,19 +418,93 @@
       weights:[], foodLogs:{}, daily:{}, workouts:{}, reflections:{},
       pushup:{stage:0,successfulSessions:0}, timer:{running:false,startedAt:null,accumulated:0}
     }; }
-    function loadState(){
-      try {
-        const raw=localStorage.getItem(STORAGE_KEY); if(!raw) return defaultState();
-        const saved=JSON.parse(raw), base=defaultState();
-        return {...base,...saved,profile:{...base.profile,...saved.profile},pushup:{...base.pushup,...saved.pushup},timer:{...base.timer,...saved.timer},weights:Array.isArray(saved.weights)?saved.weights:[],foodLogs:saved.foodLogs||{},daily:saved.daily||{},workouts:saved.workouts||{},reflections:saved.reflections||{}};
-      } catch(e){ return defaultState(); }
+    function normalizeState(saved){
+      const base=defaultState();
+      if(!saved||typeof saved!=='object') return base;
+      return {...base,...saved,profile:{...base.profile,...saved.profile},pushup:{...base.pushup,...saved.pushup},timer:{...base.timer,...saved.timer},weights:Array.isArray(saved.weights)?saved.weights:[],foodLogs:saved.foodLogs||{},daily:saved.daily||{},workouts:saved.workouts||{},reflections:saved.reflections||{}};
     }
-    let state=loadState();
+    function parseStoredState(key){
+      try { const raw=localStorage.getItem(key); return raw?normalizeState(JSON.parse(raw)):null; }
+      catch(e){ return null; }
+    }
+    function loadCachedState(){ return parseStoredState(CACHE_KEY)||parseStoredState(STORAGE_KEY)||defaultState(); }
+    let state=loadCachedState();
     let currentTab='dashboard';
     let undoAction=null;
     let toastTimer=null;
+    let cloudReady=false;
+    let cloudUpdatedAt=null;
+    let syncCredentials=null;
+    let dirtyOffline=localStorage.getItem(DIRTY_KEY)==='1';
+    let syncTimer=null;
+    let syncQueue=Promise.resolve();
     const $=id=>document.getElementById(id);
-    function saveState(){ try { localStorage.setItem(STORAGE_KEY,JSON.stringify(state)); } catch(e){ toast('Could not save locally. Export your data and check browser storage.','error'); } }
+    function setSyncStatus(kind,label){
+      const dot=$('syncDot'), text=$('syncLabel'); if(!dot||!text)return;
+      dot.className='status-dot'+(kind==='syncing'?' syncing':kind==='offline'?' offline':''); text.textContent=label;
+    }
+    function writeCache(){
+      try { localStorage.setItem(CACHE_KEY,JSON.stringify(state)); }
+      catch(e){ toast('Could not save the offline cache. Export a backup and check browser storage.','error'); }
+    }
+    function bytesToBase64Url(bytes){let binary='';for(let i=0;i<bytes.length;i+=32768)binary+=String.fromCharCode(...bytes.subarray(i,i+32768));return btoa(binary).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
+    function base64UrlToBytes(value){const base64=value.replace(/-/g,'+').replace(/_/g,'/')+'='.repeat((4-value.length%4)%4),binary=atob(base64),bytes=new Uint8Array(binary.length);for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);return bytes;}
+    function randomHex(byteCount){const bytes=new Uint8Array(byteCount);crypto.getRandomValues(bytes);return Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');}
+    function encodeCredentials(value){return bytesToBase64Url(new TextEncoder().encode(JSON.stringify(value)));}
+    function decodeCredentials(value){try{const parsed=JSON.parse(new TextDecoder().decode(base64UrlToBytes(value)));return validCredentials(parsed)?parsed:null;}catch(error){return null;}}
+    function validCredentials(value){return !!value&&/^forge85-[a-f0-9]{32}$/.test(value.namespace)&&typeof value.key==='string'&&value.key.length>=16;}
+    function credentialsFromHash(){const value=new URLSearchParams(location.hash.slice(1)).get('sync');return value?decodeCredentials(value):null;}
+    function privateSyncLink(){const url=new URL(location.href);url.hash='sync='+encodeCredentials(syncCredentials);return url.toString();}
+    function rememberCredentials(value){syncCredentials=value;const encoded=encodeCredentials(value);localStorage.setItem(SYNC_TOKEN_KEY,encoded);if(!credentialsFromHash()||encodeCredentials(credentialsFromHash())!==encoded)history.replaceState(null,'',privateSyncLink());}
+    async function encryptionKey(secret){const material=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('forge85-cloud-v2:'+secret));return crypto.subtle.importKey('raw',material,{name:'AES-GCM'},false,['encrypt','decrypt']);}
+    async function compressBytes(bytes){if(!('CompressionStream' in window))return{bytes,compressed:false};const stream=new Blob([bytes]).stream().pipeThrough(new CompressionStream('gzip'));return{bytes:new Uint8Array(await new Response(stream).arrayBuffer()),compressed:true};}
+    async function decompressBytes(bytes,compressed){if(!compressed)return bytes;if(!('DecompressionStream' in window))throw new Error('This browser cannot open compressed sync data');const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));return new Uint8Array(await new Response(stream).arrayBuffer());}
+    async function encryptState(snapshot){const packed=await compressBytes(new TextEncoder().encode(JSON.stringify(snapshot))),iv=new Uint8Array(12);crypto.getRandomValues(iv);const cipher=await crypto.subtle.encrypt({name:'AES-GCM',iv},await encryptionKey(syncCredentials.key),packed.bytes);return{version:2,compressed:packed.compressed,iv:bytesToBase64Url(iv),ciphertext:bytesToBase64Url(new Uint8Array(cipher))};}
+    async function decryptState(payload){if(!payload||payload.version!==2||!payload.iv||!payload.ciphertext)throw new Error('Invalid encrypted cloud data');const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:base64UrlToBytes(payload.iv)},await encryptionKey(syncCredentials.key),base64UrlToBytes(payload.ciphertext)),unpacked=await decompressBytes(new Uint8Array(plain),!!payload.compressed);return normalizeState(JSON.parse(new TextDecoder().decode(unpacked)));}
+    async function readRemote(){const response=await fetch(`${SYNC_API}/${encodeURIComponent(syncCredentials.namespace)}/tracker`,{headers:{Accept:'application/json','X-Mantle-Key':syncCredentials.key}});if(response.status===404)return null;if(!response.ok)throw new Error(`Cloud read failed (${response.status})`);return response.json();}
+    async function writeRemote(value){const response=await fetch(`${SYNC_API}/${encodeURIComponent(syncCredentials.namespace)}/tracker`,{method:'POST',headers:{Accept:'application/json','Content-Type':'application/json','X-Mantle-Key':syncCredentials.key},body:JSON.stringify(value)});if(!response.ok)throw new Error(`Cloud save failed (${response.status})`);return response.json();}
+    async function claimNamespace(namespace){const response=await fetch(`${SYNC_API}/claim/${encodeURIComponent(namespace)}`,{headers:{Accept:'application/json'}});if(!response.ok)throw new Error(`Cloud setup failed (${response.status})`);const data=await response.json();if(!data?.key)throw new Error('Cloud setup did not return a private key');return{namespace,key:data.key};}
+    function saveState(){
+      writeCache();
+      dirtyOffline=true;
+      localStorage.setItem(DIRTY_KEY,'1');
+      if(!cloudReady||!syncCredentials){ setSyncStatus('offline','Saved offline'); return; }
+      clearTimeout(syncTimer); setSyncStatus('syncing','Saving…');
+      syncTimer=setTimeout(()=>{syncTimer=null;pushCloudState();},350);
+    }
+    function pushCloudState(){
+      if(!cloudReady||!syncCredentials)return Promise.resolve();
+      const snapshot=JSON.parse(JSON.stringify(state));
+      syncQueue=syncQueue.catch(()=>{}).then(async()=>{
+        const payload=await encryptState(snapshot),updatedAt=new Date().toISOString();
+        await writeRemote({payload,updated_at:updatedAt});
+        cloudUpdatedAt=updatedAt;dirtyOffline=false;localStorage.removeItem(DIRTY_KEY);setSyncStatus('saved','Cloud saved');
+      }).catch(error=>{console.error('Forge 85 sync failed',error);setSyncStatus('offline','Sync paused');toast('Cloud sync paused. Your changes are cached on this device.','error');});
+      return syncQueue;
+    }
+    async function pullCloudState(showToast=false){
+      if(!cloudReady||!syncCredentials||syncTimer)return;
+      setSyncStatus('syncing','Checking…');
+      let data;try{data=await readRemote();}catch(error){console.error('Forge 85 cloud read failed',error);setSyncStatus('offline','Sync paused');if(showToast)toast('Could not reach cloud storage.','error');return;}
+      if(data?.payload&&data.updated_at!==cloudUpdatedAt){try{state=await decryptState(data.payload);cloudUpdatedAt=data.updated_at;writeCache();renderAll();}catch(error){setSyncStatus('offline','Sync error');toast('The private sync link could not unlock this data.','error');return;}}
+      setSyncStatus('saved','Cloud saved'); if(showToast)toast('Progress synced');
+    }
+    async function initializeCloud(){
+      renderAll();
+      setSyncStatus('syncing','Connecting…');
+      const hashCredentials=credentialsFromHash(),storedCredentials=decodeCredentials(localStorage.getItem(SYNC_TOKEN_KEY)||''),existing=hashCredentials||storedCredentials;
+      if(existing){
+        rememberCredentials(existing);cloudReady=true;
+        let data;try{data=await readRemote();}catch(error){console.error('Forge 85 cloud load failed',error);cloudReady=false;setSyncStatus('offline','Saved offline');return;}
+        if(dirtyOffline)await pushCloudState();
+        else if(data?.payload){try{state=await decryptState(data.payload);cloudUpdatedAt=data.updated_at;writeCache();renderAll();setSyncStatus('saved','Cloud saved');}catch(error){cloudReady=false;setSyncStatus('offline','Sync error');toast('This private link cannot unlock the saved tracker.','error');}}
+        else{dirtyOffline=true;localStorage.setItem(DIRTY_KEY,'1');await pushCloudState();}
+        return;
+      }
+      try{
+        const credentials=await claimNamespace('forge85-'+randomHex(16));rememberCredentials(credentials);cloudReady=true;dirtyOffline=true;localStorage.setItem(DIRTY_KEY,'1');await pushCloudState();toast('Universal sync is ready');
+      }catch(error){console.error('Forge 85 cloud setup failed',error);syncCredentials=null;setSyncStatus('offline','Saved on device');toast('Cloud sync could not start. Progress is still saved here.','error');}
+    }
     function dayData(key=todayKey()){ state.daily[key] ||= {steps:0,posture:{},commitment:false}; state.daily[key].posture ||= {}; return state.daily[key]; }
     function dayWorkouts(key=todayKey()){ state.workouts[key] ||= {}; return state.workouts[key]; }
     function todayFoods(){ state.foodLogs[todayKey()] ||= []; return state.foodLogs[todayKey()]; }
@@ -561,9 +642,14 @@
     $('dailyCommitment').addEventListener('change',e=>{dayData().commitment=e.target.checked;saveState();renderAll();});
     $('reflectionForm').addEventListener('submit',e=>{e.preventDefault();const text=$('reflectionText').value.trim();if(text)state.reflections[todayKey()]=text;else delete state.reflections[todayKey()];saveState();renderAll();toast(text?'Reflection saved':'Reflection cleared');});
     $('exportData').addEventListener('click',exportData); $('exportDataTop').addEventListener('click',exportData); $('importData').addEventListener('change',e=>{if(e.target.files[0])importData(e.target.files[0]);e.target.value='';});
-    $('resetData').addEventListener('click',()=>{if(!confirm('Reset all weights, food, workouts, streaks, and settings? Export first if you want a backup.'))return;if(!confirm('This cannot be undone. Reset everything?'))return;localStorage.removeItem(STORAGE_KEY);state=defaultState();$('settingsDialog').close();renderAll();toast('Tracker reset');});
+    $('resetData').addEventListener('click',()=>{if(!confirm('Reset all weights, food, workouts, streaks, and settings everywhere? Export first if you want a backup.'))return;if(!confirm('This will replace your cloud record and cannot be undone. Reset everything?'))return;state=defaultState();saveState();$('settingsDialog').close();renderAll();toast('Tracker reset on every device');});
     document.addEventListener('click',e=>{if(e.target.closest('[data-open-weight]'))openWeightDialog();});
     setInterval(()=>{if(state.timer.running)renderTimer();},1000);
+
+    $('copySyncLink').addEventListener('click',async()=>{if(!syncCredentials){toast('Cloud sync is not ready yet.','error');return;}const link=privateSyncLink();try{await navigator.clipboard.writeText(link);toast('Private sync link copied');}catch(error){window.prompt('Copy your private sync link:',link);}});
+    $('syncNow').addEventListener('click',async()=>{if(!cloudReady){await initializeCloud();return;}if(dirtyOffline)await pushCloudState();else await pullCloudState(true);});
+    window.addEventListener('online',()=>{if(!cloudReady)initializeCloud();else if(dirtyOffline)pushCloudState();else pullCloudState();});
+    window.addEventListener('focus',()=>pullCloudState());
 
     function registerWebMCP(){
       const context=document.modelContext; if(!context?.registerTool)return;
@@ -575,7 +661,7 @@
       ];
       tools.forEach(tool=>{try{Promise.resolve(context.registerTool(tool)).catch(()=>{});}catch(e){}});
     }
-    renderAll(); registerWebMCP();
+    renderAll();registerWebMCP();initializeCloud();
   })();
   </script>
 </body>

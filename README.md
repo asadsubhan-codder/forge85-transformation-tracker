@@ -1,10 +1,10 @@
 # Forge 85
 
-Forge 85 is a single-page fitness, nutrition, posture, and consistency tracker. It runs entirely in the browser with no server, account, paid API, or ChatGPT dependency.
+Forge 85 is a single-page fitness, nutrition, posture, and consistency tracker. It has no end-user account, paid API, or ChatGPT dependency.
 
-## Privacy and storage
+## Private universal sync
 
-All weigh-ins, food entries, workouts, settings, and reflections are saved in the browser's `localStorage`. The repository never receives logged data. Data is tied to the browser and the exact GitHub Pages address, so use the app's **Export backup** feature before clearing browser data or changing devices.
+The app creates one private sync link. Opening that same link on another device loads the same progress automatically. Tracker data is encrypted in the browser before it reaches account-free cloud storage; the private link contains the key and must not be shared. A local cache keeps the app usable during temporary connection problems. Export occasional backups because the free sync store can remove a namespace after 90 days without activity.
 
 ## GitHub Pages deployment
 

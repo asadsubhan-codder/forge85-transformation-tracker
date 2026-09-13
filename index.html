@@ -42,6 +42,7 @@
     .status-dot { width:8px; height:8px; border-radius:50%; background:#34d399; box-shadow:0 0 14px rgba(52,211,153,.8); }
     .status-dot.syncing { background:#ff8956; box-shadow:0 0 14px rgba(255,137,86,.75); }
     .status-dot.offline { background:#94a3b8; box-shadow:none; }
+    .login-grid { background:radial-gradient(circle at 50% 20%,rgba(255,107,44,.14),transparent 38%),#080b0a; }
     .progress-track { height:12px; overflow:hidden; border-radius:999px; background:#202823; border:1px solid #2c3932; }
     .progress-fill { height:100%; width:0; border-radius:inherit; background:linear-gradient(90deg,#ff6b2c,#ff9b5f); box-shadow:0 0 24px rgba(255,107,44,.35); transition:width .45s ease; }
     .calorie-ring { width:156px; height:156px; border-radius:50%; display:grid; place-items:center; background:conic-gradient(#34d399 var(--ring,0%),#202823 0); position:relative; }
@@ -74,6 +75,13 @@
 </head>
 <body>
   <noscript><div style="padding:24px;background:#7f1d1d;color:white;text-align:center">This tracker needs JavaScript enabled to save and calculate your progress.</div></noscript>
+
+  <section id="loginGate" class="login-grid fixed inset-0 z-[100] grid place-items-center p-5">
+    <div class="text-center">
+      <p class="text-2xl font-black tracking-[.28em] text-[#f5f7f6]">CLICK</p>
+      <button id="accountOneButton" class="mt-7 grid h-36 w-36 place-items-center rounded-[2rem] border border-[#ff8956]/60 bg-[#ff6b2c] text-7xl font-black text-[#160a04] shadow-[0_0_70px_rgba(255,107,44,.25)] transition hover:scale-105 hover:bg-[#ff7a43]" type="button" aria-label="Open account 1">1</button>
+    </div>
+  </section>
 
   <header class="nav-blur sticky top-0 z-40 border-b border-[#202a25]">
     <div class="shell flex min-h-[72px] items-center justify-between gap-4">
@@ -320,7 +328,7 @@
       <div class="flex items-start justify-between gap-3"><div><p class="eyebrow">Personal profile</p><h2 id="settingsDialogTitle" class="mt-1 text-2xl font-black">Tracker settings</h2></div><button type="button" class="btn btn-ghost !h-10 !w-10 !p-0" data-close-dialog aria-label="Close">×</button></div>
       <div class="mt-6 grid gap-4 sm:grid-cols-2"><label class="text-sm font-bold text-[#aab4af]">Starting weight (kg)<input id="settingStartWeight" class="input mt-2" type="number" min="35" max="300" step="0.1" required></label><label class="text-sm font-bold text-[#aab4af]">Target weight (kg)<input id="settingTargetWeight" class="input mt-2" type="number" min="35" max="300" step="0.1" required></label><label class="text-sm font-bold text-[#aab4af]">Starting body fat estimate (%)<input id="settingBodyFat" class="input mt-2" type="number" min="3" max="70" step="0.1" required></label><label class="text-sm font-bold text-[#aab4af]">Logging budget (kcal)<input id="settingCalories" class="input mt-2" type="number" min="1200" max="6000" step="10" required></label><label class="text-sm font-bold text-[#aab4af] sm:col-span-2">Daily step minimum<input id="settingStepGoal" class="input mt-2" type="number" min="1000" max="50000" step="500" required></label></div>
       <label class="mt-4 block text-sm font-bold text-[#aab4af]">Why I started<textarea id="settingWhy" class="input mt-2 min-h-32 resize-y" maxlength="300" required></textarea></label>
-      <div class="mt-5 rounded-2xl border border-[#2a3530] bg-[#0b100d] p-4"><div class="flex items-center gap-2"><span class="status-dot"></span><strong>Universal sync</strong></div><p class="mt-2 text-sm leading-6 text-[#87948d]">Use your private link on another device to load the same progress. Anyone with that link can control this tracker, so keep it private.</p><div class="mt-3 flex flex-col gap-2 sm:flex-row"><button id="copySyncLink" class="btn btn-secondary flex-1" type="button">Copy private link</button><button id="syncNow" class="btn btn-ghost" type="button">Sync now</button></div></div>
+      <div class="mt-5 rounded-2xl border border-[#2a3530] bg-[#0b100d] p-4"><div class="flex items-center gap-2"><span class="status-dot"></span><strong>Universal account 1</strong></div><p class="mt-2 text-sm leading-6 text-[#87948d]">Click 1 on any device and it uses the same progress record. Sync happens automatically after each change. This is intentionally a simple shared login, so anyone who can open this app can use account 1.</p><button id="syncNow" class="btn btn-ghost mt-3 w-full" type="button">Sync now</button></div>
       <div class="mt-6 flex flex-col gap-2 sm:flex-row"><button class="btn btn-primary flex-1" type="submit">Save settings</button><button id="exportData" class="btn btn-ghost" type="button">Export</button><label class="btn btn-ghost cursor-pointer">Import<input id="importData" class="sr-only" type="file" accept="application/json"></label></div>
       <div class="mt-6 border-t border-[#2a3530] pt-5"><p class="text-sm leading-6 text-[#87948d]">Your signed-in data syncs across devices. Export is still useful as a personal backup.</p><button id="resetData" class="btn btn-danger mt-4 w-full" type="button">Reset all tracker data</button></div>
     </form>
@@ -336,6 +344,7 @@
     const SYNC_TOKEN_KEY = 'forge85_private_sync_token_v1';
     const DIRTY_KEY = 'forge85_cloud_dirty_v1';
     const SYNC_API = 'https://mantledb.sh/v2';
+    const ACCOUNT_ONE = {namespace:'forge85-bae612eeb55083b146edc058a57df04e',key:'4369dfb4db69434c1572232dc5faf6c6ab39272883daa80af26b029793cf1dbb'};
     const todayKey = () => { const d=new Date(); return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-'); };
     const dateKeyFromOffset = offset => { const d=new Date(); d.setDate(d.getDate()+offset); return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-'); };
     const uid = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36)+Math.random().toString(36).slice(2));
@@ -455,7 +464,7 @@
     function validCredentials(value){return !!value&&/^forge85-[a-f0-9]{32}$/.test(value.namespace)&&typeof value.key==='string'&&value.key.length>=16;}
     function credentialsFromHash(){const value=new URLSearchParams(location.hash.slice(1)).get('sync');return value?decodeCredentials(value):null;}
     function privateSyncLink(){const url=new URL(location.href);url.hash='sync='+encodeCredentials(syncCredentials);return url.toString();}
-    function rememberCredentials(value){syncCredentials=value;const encoded=encodeCredentials(value);localStorage.setItem(SYNC_TOKEN_KEY,encoded);if(!credentialsFromHash()||encodeCredentials(credentialsFromHash())!==encoded)history.replaceState(null,'',privateSyncLink());}
+    function rememberCredentials(value,showPrivateLink=true){syncCredentials=value;const encoded=encodeCredentials(value);localStorage.setItem(SYNC_TOKEN_KEY,encoded);if(showPrivateLink&&(!credentialsFromHash()||encodeCredentials(credentialsFromHash())!==encoded))history.replaceState(null,'',privateSyncLink());}
     async function encryptionKey(secret){const material=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('forge85-cloud-v2:'+secret));return crypto.subtle.importKey('raw',material,{name:'AES-GCM'},false,['encrypt','decrypt']);}
     async function compressBytes(bytes){if(!('CompressionStream' in window))return{bytes,compressed:false};const stream=new Blob([bytes]).stream().pipeThrough(new CompressionStream('gzip'));return{bytes:new Uint8Array(await new Response(stream).arrayBuffer()),compressed:true};}
     async function decompressBytes(bytes,compressed){if(!compressed)return bytes;if(!('DecompressionStream' in window))throw new Error('This browser cannot open compressed sync data');const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));return new Uint8Array(await new Response(stream).arrayBuffer());}
@@ -492,9 +501,9 @@
     async function initializeCloud(){
       renderAll();
       setSyncStatus('syncing','Connecting…');
-      const hashCredentials=credentialsFromHash(),storedCredentials=decodeCredentials(localStorage.getItem(SYNC_TOKEN_KEY)||''),existing=hashCredentials||storedCredentials;
+      const hashCredentials=credentialsFromHash(),storedCredentials=decodeCredentials(localStorage.getItem(SYNC_TOKEN_KEY)||''),existing=hashCredentials||storedCredentials||ACCOUNT_ONE;
       if(existing){
-        rememberCredentials(existing);cloudReady=true;
+        rememberCredentials(existing,!!(hashCredentials||storedCredentials));cloudReady=true;
         let data;try{data=await readRemote();}catch(error){console.error('Forge 85 cloud load failed',error);cloudReady=false;setSyncStatus('offline','Saved offline');return;}
         if(dirtyOffline)await pushCloudState();
         else if(data?.payload){try{state=await decryptState(data.payload);cloudUpdatedAt=data.updated_at;writeCache();renderAll();setSyncStatus('saved','Cloud saved');}catch(error){cloudReady=false;setSyncStatus('offline','Sync error');toast('This private link cannot unlock the saved tracker.','error');}}
@@ -646,9 +655,9 @@
     document.addEventListener('click',e=>{if(e.target.closest('[data-open-weight]'))openWeightDialog();});
     setInterval(()=>{if(state.timer.running)renderTimer();},1000);
 
-    $('copySyncLink').addEventListener('click',async()=>{if(!syncCredentials){toast('Cloud sync is not ready yet.','error');return;}const link=privateSyncLink();try{await navigator.clipboard.writeText(link);toast('Private sync link copied');}catch(error){window.prompt('Copy your private sync link:',link);}});
     $('syncNow').addEventListener('click',async()=>{if(!cloudReady){await initializeCloud();return;}if(dirtyOffline)await pushCloudState();else await pullCloudState(true);});
-    window.addEventListener('online',()=>{if(!cloudReady)initializeCloud();else if(dirtyOffline)pushCloudState();else pullCloudState();});
+    $('accountOneButton').addEventListener('click',async()=>{$('loginGate').hidden=true;await initializeCloud();});
+    window.addEventListener('online',()=>{if($('loginGate').hidden&&!cloudReady)initializeCloud();else if(cloudReady&&(dirtyOffline?pushCloudState():pullCloudState()));});
     window.addEventListener('focus',()=>pullCloudState());
 
     function registerWebMCP(){
@@ -661,7 +670,7 @@
       ];
       tools.forEach(tool=>{try{Promise.resolve(context.registerTool(tool)).catch(()=>{});}catch(e){}});
     }
-    renderAll();registerWebMCP();initializeCloud();
+    renderAll();registerWebMCP();setSyncStatus('offline','Locked');
   })();
   </script>
 </body>

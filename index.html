@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="A private, device-local fitness, nutrition, posture, and consistency tracker.">
+  <meta name="theme-color" content="#080b0a">
+  <title>Forge 85 — Transformation Tracker</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%23080b0a'/%3E%3Cpath d='M16 18h34v8H26v8h19v8H26v16H16z' fill='%23ff6b2c'/%3E%3Ccircle cx='49' cy='49' r='7' fill='%2334d399'/%3E%3C/svg%3E">
+  <script>
+    tailwind = { config: { theme: { extend: { colors: { ink:'#080b0a', panel:'#101513', line:'#25302b', ember:'#ff6b2c', mint:'#34d399' } } } } };
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root { color-scheme: dark; --ember:#ff6b2c; --mint:#34d399; --ink:#080b0a; --panel:#101513; --muted:#91a099; }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin:0; min-width:320px; background:#080b0a; color:#f5f7f6; font-family:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size:16px; line-height:1.5; }
+    body::before { content:""; position:fixed; inset:0; pointer-events:none; opacity:.33; background-image:linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px); background-size:32px 32px; mask-image:linear-gradient(to bottom,black,transparent 80%); z-index:-1; }
+    button,input,select,textarea { font:inherit; }
+    button { -webkit-tap-highlight-color:transparent; }
+    :focus-visible { outline:3px solid rgba(52,211,153,.75); outline-offset:3px; }
+    ::selection { background:rgba(255,107,44,.35); }
+    ::-webkit-scrollbar { width:10px; height:10px; } ::-webkit-scrollbar-track { background:#080b0a; } ::-webkit-scrollbar-thumb { background:#344039; border-radius:999px; border:2px solid #080b0a; }
+    .shell { width:min(1440px,100%); margin:0 auto; padding:0 24px; }
+    .card { position:relative; background:linear-gradient(145deg,rgba(18,24,21,.96),rgba(12,16,14,.96)); border:1px solid #25302b; border-radius:20px; box-shadow:0 18px 50px rgba(0,0,0,.18); }
+    .card-hover { transition:transform .2s ease,border-color .2s ease; } .card-hover:hover { transform:translateY(-2px); border-color:#3a4942; }
+    .eyebrow { color:#91a099; text-transform:uppercase; letter-spacing:.14em; font-size:.75rem; font-weight:800; }
+    .metric { font-variant-numeric:tabular-nums; letter-spacing:-.04em; }
+    .input { width:100%; min-height:46px; color:#f6f8f7; background:#090d0b; border:1px solid #2b3631; border-radius:12px; padding:10px 12px; transition:border-color .2s,box-shadow .2s; }
+    .input:focus { outline:0; border-color:#34d399; box-shadow:0 0 0 3px rgba(52,211,153,.12); }
+    .input::placeholder { color:#66736c; }
+    .btn { min-height:44px; display:inline-flex; align-items:center; justify-content:center; gap:8px; border-radius:12px; padding:10px 15px; border:1px solid transparent; font-weight:800; transition:transform .15s,background .15s,border-color .15s,opacity .15s; cursor:pointer; }
+    .btn:active { transform:scale(.98); } .btn:disabled { opacity:.45; cursor:not-allowed; }
+    .btn-primary { color:#120804; background:#ff6b2c; } .btn-primary:hover { background:#ff7a43; }
+    .btn-secondary { color:#062218; background:#34d399; } .btn-secondary:hover { background:#52e1ae; }
+    .btn-ghost { color:#e8ecea; background:#121815; border-color:#2a3630; } .btn-ghost:hover { background:#19211d; border-color:#46564e; }
+    .btn-danger { color:#fecaca; background:rgba(127,29,29,.2); border-color:#7f1d1d; }
+    .tab-button { color:#8d9a94; min-height:42px; border-radius:10px; padding:9px 13px; font-weight:750; transition:.2s; white-space:nowrap; }
+    .tab-button:hover { color:#fff; background:#151c18; } .tab-button.active { color:#fff; background:#202a25; box-shadow:inset 0 0 0 1px #344239; }
+    .mobile-tab.active { color:#ff8956; }
+    .status-dot { width:8px; height:8px; border-radius:50%; background:#34d399; box-shadow:0 0 14px rgba(52,211,153,.8); }
+    .progress-track { height:12px; overflow:hidden; border-radius:999px; background:#202823; border:1px solid #2c3932; }
+    .progress-fill { height:100%; width:0; border-radius:inherit; background:linear-gradient(90deg,#ff6b2c,#ff9b5f); box-shadow:0 0 24px rgba(255,107,44,.35); transition:width .45s ease; }
+    .calorie-ring { width:156px; height:156px; border-radius:50%; display:grid; place-items:center; background:conic-gradient(#34d399 var(--ring,0%),#202823 0); position:relative; }
+    .calorie-ring::after { content:""; position:absolute; inset:12px; border-radius:50%; background:#0e1311; border:1px solid #25302b; }
+    .calorie-ring > div { position:relative; z-index:1; text-align:center; }
+    .check-row { display:flex; align-items:flex-start; gap:12px; padding:13px; border:1px solid #26312c; border-radius:14px; background:#0d120f; cursor:pointer; transition:.2s; }
+    .check-row:hover { border-color:#415149; } .check-row.done { border-color:rgba(52,211,153,.45); background:rgba(52,211,153,.06); }
+    .check-box { flex:0 0 auto; width:22px; height:22px; border-radius:7px; border:1px solid #536159; display:grid; place-items:center; margin-top:1px; color:#062218; }
+    .done .check-box { background:#34d399; border-color:#34d399; }
+    .food-card { display:flex; flex-direction:column; min-height:156px; padding:16px; border:1px solid #26312c; border-radius:16px; background:#0d120f; text-align:left; transition:.2s; cursor:pointer; }
+    .food-card:hover { transform:translateY(-2px); border-color:#ff6b2c; background:#121815; }
+    .food-card:active { transform:scale(.985); }
+    .pill { display:inline-flex; align-items:center; gap:6px; padding:5px 9px; border:1px solid #314039; background:#121815; border-radius:999px; color:#b9c2bd; font-size:.78rem; font-weight:750; }
+    .stage { min-width:150px; padding:14px; border:1px solid #28332e; background:#0c110e; border-radius:15px; }
+    .stage.active { border-color:#ff6b2c; box-shadow:0 0 0 1px rgba(255,107,44,.2),0 10px 32px rgba(255,107,44,.08); }
+    .stage.complete { border-color:rgba(52,211,153,.42); background:rgba(52,211,153,.05); }
+    .heat { aspect-ratio:1; border-radius:5px; background:#1d2521; border:1px solid #2b3530; }
+    .heat-1 { background:rgba(255,107,44,.35); border-color:rgba(255,107,44,.45); } .heat-2 { background:rgba(255,107,44,.66); border-color:rgba(255,107,44,.7); } .heat-3 { background:#34d399; border-color:#34d399; }
+    .toast { display:flex; align-items:center; justify-content:space-between; gap:16px; width:min(390px,calc(100vw - 32px)); padding:14px 16px; border-radius:14px; border:1px solid #3b4942; background:#151d19; box-shadow:0 20px 60px rgba(0,0,0,.45); animation:toast-in .25s ease both; }
+    @keyframes toast-in { from{opacity:0;transform:translateY(10px)} }
+    dialog { color:#f6f8f7; width:min(560px,calc(100vw - 28px)); max-height:88vh; padding:0; border:1px solid #334039; border-radius:22px; background:#101513; box-shadow:0 30px 100px rgba(0,0,0,.7); }
+    dialog::backdrop { background:rgba(0,0,0,.72); backdrop-filter:blur(4px); }
+    .nav-blur { background:rgba(8,11,10,.82); backdrop-filter:blur(16px); }
+    .workout-check:checked + span { color:#34d399; text-decoration:line-through; text-decoration-color:rgba(52,211,153,.5); }
+    [hidden] { display:none !important; }
+    @media (max-width:767px) { .shell{padding:0 16px}.desktop-tabs{display:none!important} main{padding-bottom:96px!important}.calorie-ring{width:132px;height:132px} }
+    @media (min-width:768px) { .mobile-nav{display:none!important} }
+    @media (prefers-reduced-motion:reduce) { *,*::before,*::after{scroll-behavior:auto!important;animation:none!important;transition:none!important} }
+  </style>
+</head>
+<body>
+  <noscript><div style="padding:24px;background:#7f1d1d;color:white;text-align:center">This tracker needs JavaScript enabled to save and calculate your progress.</div></noscript>
+
+  <header class="nav-blur sticky top-0 z-40 border-b border-[#202a25]">
+    <div class="shell flex min-h-[72px] items-center justify-between gap-4">
+      <button class="flex items-center gap-3 text-left" data-go="dashboard" aria-label="Open dashboard">
+        <span class="grid h-10 w-10 place-items-center rounded-xl bg-[#ff6b2c] font-black text-[#160a04] shadow-[0_0_28px_rgba(255,107,44,.2)]">F85</span>
+        <span><span class="block text-[15px] font-black tracking-[.12em]">FORGE 85</span><span class="block text-xs font-semibold text-[#829088]">Personal control room</span></span>
+      </button>
+      <nav class="desktop-tabs flex items-center gap-1" aria-label="Primary navigation">
+        <button class="tab-button active" data-tab="dashboard">Today</button>
+        <button class="tab-button" data-tab="nutrition">Nutrition</button>
+        <button class="tab-button" data-tab="workout">Training</button>
+        <button class="tab-button" data-tab="history">History</button>
+        <button class="tab-button" data-tab="mindset">Mindset</button>
+      </nav>
+      <div class="flex items-center gap-2">
+        <span class="hidden items-center gap-2 text-sm font-bold text-[#9aa69f] sm:flex"><span class="status-dot"></span>Device saved</span>
+        <button id="openSettings" class="btn btn-ghost !h-11 !w-11 !p-0" aria-label="Open settings" title="Settings">
+          <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06A1.7 1.7 0 0 0 15 19.37a1.7 1.7 0 0 0-1 .63 1.7 1.7 0 0 0-.37 1.06V21h-4v-.09A1.7 1.7 0 0 0 8.6 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.23 15a1.7 1.7 0 0 0-.63-1 1.7 1.7 0 0 0-1.06-.37H2.5v-4h.09A1.7 1.7 0 0 0 4.1 8.6a1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 8.5 4.23a1.7 1.7 0 0 0 1-.63 1.7 1.7 0 0 0 .37-1.06V2.5h4v.09A1.7 1.7 0 0 0 14.9 4.1a1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.77 8.5c.16.38.4.72.72.98.3.25.68.39 1.07.39h.09v4h-.09a1.7 1.7 0 0 0-1.06.37c-.46.36-.73.9-.73 1.48Z"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="shell py-7 md:py-9">
+    <section id="panel-dashboard" data-panel="dashboard">
+      <div class="mb-7 flex flex-col justify-between gap-3 md:flex-row md:items-end">
+        <div>
+          <p class="eyebrow" id="todayDate">Today</p>
+          <h1 class="mt-1 text-3xl font-black tracking-[-.045em] md:text-4xl">Execute the plan.</h1>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="pill"><span class="text-[#ff8956]">●</span><span id="headerLogStreak">0-day log streak</span></span>
+          <span class="pill"><span class="text-[#34d399]">●</span><span id="headerStepStreak">0-day step streak</span></span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 gap-4 xl:grid-cols-12">
+        <article class="card overflow-hidden p-5 md:p-7 xl:col-span-8">
+          <div class="absolute -right-24 -top-24 h-64 w-64 rounded-full bg-[#ff6b2c]/[.07] blur-3xl"></div>
+          <div class="relative flex flex-col gap-7">
+            <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+              <div><p class="eyebrow">Weight objective</p><h2 class="mt-2 text-xl font-extrabold">First checkpoint: <span id="targetWeightHeading">85.0 kg</span></h2></div>
+              <button id="openWeightLog" class="btn btn-primary">+ Log weight</button>
+            </div>
+            <div class="grid grid-cols-2 gap-4 md:grid-cols-4">
+              <div><p class="text-sm font-bold text-[#8f9c95]">Current</p><p class="metric mt-1 text-4xl font-black"><span id="currentWeight">95.0</span><span class="ml-1 text-base text-[#8f9c95]">kg</span></p></div>
+              <div><p class="text-sm font-bold text-[#8f9c95]">Lost</p><p class="metric mt-1 text-4xl font-black text-[#34d399]"><span id="weightLost">0.0</span><span class="ml-1 text-base text-[#8f9c95]">kg</span></p></div>
+              <div><p class="text-sm font-bold text-[#8f9c95]">Remaining</p><p class="metric mt-1 text-4xl font-black text-[#ff8956]"><span id="weightRemaining">10.0</span><span class="ml-1 text-base text-[#8f9c95]">kg</span></p></div>
+              <div><p class="text-sm font-bold text-[#8f9c95]">Starting BF</p><p class="metric mt-1 text-4xl font-black"><span id="startBf">34.3</span><span class="ml-1 text-base text-[#8f9c95]">%</span></p></div>
+            </div>
+            <div>
+              <div class="mb-2 flex justify-between text-sm font-bold"><span id="weightProgressLabel">0% to checkpoint</span><span id="weightRangeLabel">95 → 85 kg</span></div>
+              <div class="progress-track" role="progressbar" aria-label="Weight loss progress" aria-valuemin="0" aria-valuemax="100"><div id="weightProgress" class="progress-fill"></div></div>
+              <p id="paceNote" class="mt-3 text-sm leading-6 text-[#93a099]">Log your first weigh-in. Compare weekly trends, not daily noise.</p>
+            </div>
+          </div>
+        </article>
+
+        <article class="card p-5 md:p-7 xl:col-span-4">
+          <div class="flex items-center justify-between"><p class="eyebrow">Consistency</p><span class="grid h-9 w-9 place-items-center rounded-full bg-[#ff6b2c]/10 text-lg">🔥</span></div>
+          <div class="mt-6 grid grid-cols-2 gap-3">
+            <div class="rounded-2xl border border-[#2a3530] bg-[#0b100d] p-4"><p id="logStreak" class="metric text-4xl font-black">0</p><p class="mt-1 text-sm font-bold text-[#8f9c95]">days logged</p></div>
+            <div class="rounded-2xl border border-[#2a3530] bg-[#0b100d] p-4"><p id="stepStreak" class="metric text-4xl font-black text-[#34d399]">0</p><p class="mt-1 text-sm font-bold text-[#8f9c95]">step-goal days</p></div>
+          </div>
+          <div class="mt-4 rounded-2xl border border-[#2a3530] bg-[#0b100d] p-4">
+            <div class="flex items-center justify-between gap-3"><span class="font-extrabold">Today’s execution</span><span id="dailyScore" class="text-sm font-black text-[#ff8956]">0 / 5</span></div>
+            <div class="mt-3 h-2 overflow-hidden rounded-full bg-[#222b26]"><div id="dailyScoreBar" class="h-full rounded-full bg-[#34d399] transition-all"></div></div>
+          </div>
+          <p class="mt-4 text-sm leading-6 text-[#87948d]">A streak measures return, not perfection. One honest entry keeps the system alive.</p>
+        </article>
+
+        <article class="card p-5 md:p-6 xl:col-span-4">
+          <div class="flex items-center justify-between"><div><p class="eyebrow">Calories today</p><h2 class="mt-1 text-lg font-extrabold">Budget control</h2></div><button class="btn btn-ghost !min-h-10 !px-3 !py-2" data-go="nutrition">Open log</button></div>
+          <div class="mt-5 flex items-center gap-5">
+            <div id="dashboardCalorieRing" class="calorie-ring !h-[126px] !w-[126px]"><div><p id="dashCaloriesRemaining" class="metric text-3xl font-black">2,000</p><p class="text-xs font-bold text-[#8f9c95]">kcal left</p></div></div>
+            <div class="min-w-0 flex-1 space-y-3 text-sm">
+              <div class="flex justify-between gap-3"><span class="text-[#8f9c95]">Logged</span><strong><span id="dashCaloriesLogged">0</span> kcal</strong></div>
+              <div class="flex justify-between gap-3"><span class="text-[#8f9c95]">Target</span><strong><span id="dashCalorieTarget">2,000</span> kcal</strong></div>
+              <div class="flex justify-between gap-3"><span class="text-[#8f9c95]">Entries</span><strong id="dashFoodCount">0</strong></div>
+            </div>
+          </div>
+        </article>
+
+        <article class="card p-5 md:p-6 xl:col-span-4">
+          <div class="flex items-center justify-between"><div><p class="eyebrow">Movement</p><h2 class="mt-1 text-lg font-extrabold">8,000–10,000 steps</h2></div><span id="stepPercent" class="text-sm font-black text-[#34d399]">0%</span></div>
+          <form id="stepsForm" class="mt-5">
+            <label for="stepsInput" class="mb-2 block text-sm font-bold text-[#aab4af]">Steps today</label>
+            <div class="flex gap-2"><input id="stepsInput" class="input metric" type="number" min="0" max="100000" step="1" value="0" required><button class="btn btn-secondary" type="submit">Save</button></div>
+          </form>
+          <div class="mt-4 progress-track"><div id="stepProgress" class="h-full rounded-full bg-[#34d399] transition-all"></div></div>
+          <div class="mt-3 flex justify-between text-sm"><span class="text-[#8f9c95]">Minimum goal</span><strong id="stepGoalText">8,000</strong></div>
+        </article>
+
+        <article class="card overflow-hidden border-[#ff6b2c]/40 p-5 md:p-6 xl:col-span-4">
+          <div class="absolute -bottom-20 -right-16 h-48 w-48 rounded-full bg-[#ff6b2c]/[.08] blur-3xl"></div>
+          <div class="relative"><div class="flex items-center justify-between"><p class="eyebrow !text-[#ff8956]">Why I started</p><button id="editWhy" class="text-sm font-bold text-[#aab4af] underline decoration-[#56645d] underline-offset-4 hover:text-white">Edit</button></div>
+          <blockquote id="whyText" class="mt-4 text-xl font-extrabold leading-8 tracking-[-.02em]">I’m done waiting to feel ready. I’m building strength, posture, discipline, and a body I trust—one honest day at a time.</blockquote>
+          <p class="mt-4 text-sm font-bold text-[#87948d]">The card stays. The reason can grow with you.</p></div>
+        </article>
+
+        <article class="card p-5 md:p-7 xl:col-span-7">
+          <div class="flex flex-col justify-between gap-2 sm:flex-row sm:items-end"><div><p class="eyebrow">Posture reset</p><h2 class="mt-1 text-xl font-extrabold">Four checkpoints. Several times a day.</h2></div><span id="postureCount" class="pill">0 / 4 checked</span></div>
+          <div id="postureChecklist" class="mt-5 grid gap-3 sm:grid-cols-2"></div>
+        </article>
+
+        <article class="card p-5 md:p-7 xl:col-span-5">
+          <div class="flex items-start justify-between gap-3"><div><p class="eyebrow">Next training action</p><h2 id="nextWorkoutTitle" class="mt-1 text-xl font-extrabold">Wall push-ups · Base</h2></div><span id="nextWorkoutBadge" class="pill">Level 1</span></div>
+          <div class="mt-6 flex items-end gap-3"><p id="nextWorkoutPrescription" class="metric text-5xl font-black text-[#ff8956]">3 × 8</p><p class="pb-2 text-sm font-bold text-[#8f9c95]">clean reps</p></div>
+          <p id="nextWorkoutCue" class="mt-4 text-sm leading-6 text-[#9da8a2]">Body straight, hands at chest height, lower under control.</p>
+          <button class="btn btn-primary mt-6 w-full" data-go="workout">Open training plan</button>
+        </article>
+      </div>
+
+      <aside class="mt-4 flex gap-3 rounded-2xl border border-amber-400/25 bg-amber-300/[.05] p-4 text-sm leading-6 text-[#d8d3bc]">
+        <span aria-hidden="true" class="text-lg">⚠</span><p><strong class="text-amber-200">Because you’re 16:</strong> 2,000 kcal is a logging benchmark, not a medical prescription. Review intentional weight loss with a parent or guardian and a doctor or registered dietitian. Don’t skip meals or “earn back” food with exercise.</p>
+      </aside>
+    </section>
+
+    <section id="panel-nutrition" data-panel="nutrition" hidden>
+      <div class="mb-7 flex flex-col justify-between gap-3 md:flex-row md:items-end">
+        <div><p class="eyebrow">Nutrition control</p><h1 class="mt-1 text-3xl font-black tracking-[-.045em] md:text-4xl">Log it. Don’t negotiate with it.</h1></div>
+        <div class="flex gap-2"><button id="scrollToCustomFood" class="btn btn-ghost">Custom food</button><button id="clearTodayFood" class="btn btn-danger">Clear today</button></div>
+      </div>
+      <div class="grid gap-4 xl:grid-cols-12">
+        <article class="card p-5 md:p-7 xl:col-span-4">
+          <div class="flex flex-col items-center text-center">
+            <p class="eyebrow">Daily budget</p>
+            <div id="nutritionCalorieRing" class="calorie-ring mt-5"><div><p id="nutritionCaloriesRemaining" class="metric text-3xl font-black">2,000</p><p class="text-xs font-bold text-[#8f9c95]">kcal remaining</p></div></div>
+            <p id="nutritionBudgetMessage" class="mt-4 font-extrabold">Full budget available</p>
+          </div>
+          <div class="mt-6 grid grid-cols-2 gap-3 text-center"><div class="rounded-xl bg-[#0b100d] p-3"><p id="nutritionLogged" class="metric text-2xl font-black">0</p><p class="text-sm font-bold text-[#87948d]">eaten</p></div><div class="rounded-xl bg-[#0b100d] p-3"><p id="nutritionTarget" class="metric text-2xl font-black">2,000</p><p class="text-sm font-bold text-[#87948d]">target</p></div></div>
+          <div class="mt-5 rounded-xl border border-[#2c3832] bg-[#0b100d] p-4 text-sm leading-6 text-[#a5afa9]"><strong class="text-white">South Asian meal rule:</strong> log oil-rich curries, biryani, naan, and sweets at the higher reasonable estimate when the portion is uncertain. Accuracy beats optimism.</div>
+        </article>
+
+        <article class="card p-5 md:p-7 xl:col-span-8">
+          <div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-center"><div><p class="eyebrow">Today’s food</p><h2 class="mt-1 text-xl font-extrabold"><span id="todayFoodCount">0</span> entries</h2></div><label class="flex items-center gap-2 text-sm font-bold text-[#aab4af]">Add to <select id="quickMeal" class="input !min-h-10 !w-auto !py-2"><option>Breakfast</option><option>Lunch</option><option>Dinner</option><option selected>Snack</option></select></label></div>
+          <div id="todayFoodList" class="mt-5 space-y-2"></div>
+        </article>
+
+        <article class="card p-5 md:p-7 xl:col-span-12">
+          <div class="flex flex-col justify-between gap-4 lg:flex-row lg:items-end"><div><p class="eyebrow">Quick-add food database</p><h2 class="mt-1 text-xl font-extrabold">Tap once to log a serving</h2></div><div class="grid w-full gap-2 sm:grid-cols-[1fr_auto] lg:max-w-2xl"><label><span class="sr-only">Search foods</span><input id="foodSearch" class="input" type="search" placeholder="Search roti, chocolate, chicken…"></label><select id="foodCategory" class="input sm:w-44"><option value="all">All foods</option><option value="South Asian">South Asian</option><option value="Protein & staples">Protein & staples</option><option value="Fruit & sides">Fruit & sides</option><option value="Snacks & drinks">Snacks & drinks</option></select></div></div>
+          <p class="mt-3 text-sm text-[#829088]">Calories are practical estimates; recipes and serving sizes vary. Check packaging when available.</p>
+          <div id="foodGrid" class="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"></div>
+        </article>
+
+        <article id="customFoodCard" class="card p-5 md:p-7 xl:col-span-12">
+          <p class="eyebrow">Manual entry</p><h2 class="mt-1 text-xl font-extrabold">Log exactly what you ate</h2>
+          <form id="customFoodForm" class="mt-5 grid gap-3 md:grid-cols-[2fr_1fr_1fr_auto] md:items-end">
+            <label class="text-sm font-bold text-[#aab4af]">Food or meal name<input id="customFoodName" class="input mt-2" type="text" maxlength="80" required placeholder="Example: 2 chocolate bars"></label>
+            <label class="text-sm font-bold text-[#aab4af]">Calories<input id="customFoodCalories" class="input mt-2" type="number" min="1" max="10000" step="1" value="500" required></label>
+            <label class="text-sm font-bold text-[#aab4af]">Meal<select id="customFoodMeal" class="input mt-2"><option>Breakfast</option><option>Lunch</option><option>Dinner</option><option selected>Snack</option></select></label>
+            <button class="btn btn-primary md:mb-0" type="submit">Add food</button>
+          </form>
+        </article>
+      </div>
+    </section>
+
+    <section id="panel-workout" data-panel="workout" hidden>
+      <div class="mb-7"><p class="eyebrow">Home training system</p><h1 class="mt-1 text-3xl font-black tracking-[-.045em] md:text-4xl">Build strength you can repeat.</h1><p class="mt-3 max-w-3xl text-[#96a29c]">Use clean form and stop a set when it breaks. Full strength sessions work well 3 non-consecutive days per week; easy walking and brief posture practice can happen daily.</p></div>
+      <div class="grid gap-4 xl:grid-cols-12">
+        <article class="card p-5 md:p-7 xl:col-span-12">
+          <div class="flex flex-col justify-between gap-3 md:flex-row md:items-end"><div><p class="eyebrow">Push-up ladder</p><h2 class="mt-1 text-xl font-extrabold">Wall → Knee → Full</h2></div><label class="text-sm font-bold text-[#aab4af]">Adjust current level<select id="pushupStageSelect" class="input mt-2 min-w-56"></select></label></div>
+          <div id="pushupStages" class="mt-6 flex gap-3 overflow-x-auto pb-2"></div>
+        </article>
+
+        <article class="card p-5 md:p-7 xl:col-span-5">
+          <div class="flex items-start justify-between gap-3"><div><p class="eyebrow">Today’s push-up work</p><h2 id="pushupWorkoutName" class="mt-1 text-xl font-extrabold">Wall push-ups · Base</h2></div><span id="pushupSessionProgress" class="pill">0 / 3 wins</span></div>
+          <div class="mt-6 rounded-2xl border border-[#35413b] bg-[#0b100d] p-5"><p class="eyebrow">Prescription</p><div class="mt-2 flex items-end gap-2"><span id="pushupTarget" class="metric text-5xl font-black text-[#ff8956]">3 × 8</span><span class="pb-2 text-sm font-bold text-[#89968f]">sets × reps</span></div><p id="pushupCue" class="mt-4 text-sm leading-6 text-[#a4aea8]"></p></div>
+          <form id="pushupForm" class="mt-5 grid grid-cols-2 gap-3">
+            <label class="text-sm font-bold text-[#aab4af]">Sets completed<input id="pushupSets" class="input mt-2" type="number" min="0" max="20" step="1" value="3" required></label>
+            <label class="text-sm font-bold text-[#aab4af]">Lowest clean reps<input id="pushupReps" class="input mt-2" type="number" min="0" max="100" step="1" value="8" required></label>
+            <label class="col-span-2 text-sm font-bold text-[#aab4af]">How did form feel?<select id="pushupEffort" class="input mt-2"><option value="clean">Clean — target achieved</option><option value="hard">Hard but clean</option><option value="form-broke">Form broke before target</option></select></label>
+            <button class="btn btn-primary col-span-2" type="submit">Log push-up session</button>
+          </form>
+        </article>
+
+        <article class="card p-5 md:p-7 xl:col-span-7">
+          <div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-start"><div><p class="eyebrow">18 lb dumbbell circuit</p><h2 class="mt-1 text-xl font-extrabold">Full-body foundation</h2></div><span class="pill">2–3 rounds · 60–90s rest</span></div>
+          <p class="mt-3 text-sm leading-6 text-[#909d96]">Start with 2 rounds if needed. If 18 lb is too heavy for clean reps, use one dumbbell, shorten the set, or skip that movement—never force joint pain.</p>
+          <div id="circuitList" class="mt-5 space-y-2"></div>
+          <button id="logCircuit" class="btn btn-secondary mt-5 w-full">Log checked exercises</button>
+        </article>
+
+        <article class="card p-5 md:p-7 xl:col-span-7">
+          <div class="flex items-start justify-between gap-3"><div><p class="eyebrow">Treadmill</p><h2 class="mt-1 text-xl font-extrabold">Walking timer</h2></div><span id="timerStatus" class="pill">Ready</span></div>
+          <div class="mt-7 text-center"><p id="timerDisplay" class="metric text-6xl font-black tracking-[-.06em] sm:text-7xl">00:00</p><p class="mt-2 text-sm font-bold text-[#87948d]">minutes : seconds</p></div>
+          <div class="mt-6 grid grid-cols-3 gap-2"><button id="startTimer" class="btn btn-secondary">Start</button><button id="pauseTimer" class="btn btn-ghost">Pause</button><button id="resetTimer" class="btn btn-ghost">Reset</button></div>
+          <form id="treadmillForm" class="mt-6 grid gap-3 sm:grid-cols-3">
+            <label class="text-sm font-bold text-[#aab4af]">Minutes<input id="treadmillMinutes" class="input mt-2" type="number" min="0" max="600" step="1" value="0" required></label>
+            <label class="text-sm font-bold text-[#aab4af]">Steps<input id="treadmillSteps" class="input mt-2" type="number" min="0" max="100000" step="1" value="0" required></label>
+            <label class="text-sm font-bold text-[#aab4af]">Incline %<input id="treadmillIncline" class="input mt-2" type="number" min="0" max="30" step="0.5" value="0" required></label>
+            <button class="btn btn-primary sm:col-span-3" type="submit">Save treadmill walk</button>
+          </form>
+        </article>
+
+        <article class="card p-5 md:p-7 xl:col-span-5">
+          <p class="eyebrow">Form guardrails</p><h2 class="mt-1 text-xl font-extrabold">Quality first</h2>
+          <ol class="mt-5 space-y-4 text-sm leading-6 text-[#a5afa9]"><li class="flex gap-3"><span class="font-black text-[#ff8956]">01</span><span><strong class="text-white">Leave 1–3 clean reps in reserve.</strong> Stop before technique collapses.</span></li><li class="flex gap-3"><span class="font-black text-[#ff8956]">02</span><span><strong class="text-white">Use a pain rule.</strong> Muscle effort is expected; sharp joint pain is a stop sign.</span></li><li class="flex gap-3"><span class="font-black text-[#ff8956]">03</span><span><strong class="text-white">Progress one variable.</strong> Add reps, a set, or a harder variation—not all three at once.</span></li><li class="flex gap-3"><span class="font-black text-[#ff8956]">04</span><span><strong class="text-white">Recover.</strong> Sleep 8–10 hours when possible and keep hard strength days non-consecutive.</span></li></ol>
+        </article>
+      </div>
+    </section>
+
+    <section id="panel-history" data-panel="history" hidden>
+      <div class="mb-7 flex flex-col justify-between gap-3 md:flex-row md:items-end"><div><p class="eyebrow">Evidence, not memory</p><h1 class="mt-1 text-3xl font-black tracking-[-.045em] md:text-4xl">Your progress history.</h1></div><button id="exportDataTop" class="btn btn-ghost">Export backup</button></div>
+      <div class="grid gap-4 xl:grid-cols-12">
+        <article class="card p-5 md:p-7 xl:col-span-8"><div class="flex items-end justify-between gap-3"><div><p class="eyebrow">Weight trend</p><h2 class="mt-1 text-xl font-extrabold">All weigh-ins</h2></div><span id="weightLogCount" class="pill">0 logs</span></div><div id="weightChart" class="mt-6 min-h-[260px] overflow-hidden rounded-2xl border border-[#26312c] bg-[#0a0e0c] p-3"></div></article>
+        <article class="card p-5 md:p-7 xl:col-span-4"><p class="eyebrow">Last 21 days</p><h2 class="mt-1 text-xl font-extrabold">Consistency map</h2><div id="heatmap" class="mt-6 grid grid-cols-7 gap-2"></div><div class="mt-4 flex flex-wrap gap-3 text-xs font-bold text-[#89958f]"><span>■ Empty</span><span class="text-[#ff8956]">■ Logged</span><span class="text-[#34d399]">■ Strong day</span></div><div class="mt-6 grid grid-cols-2 gap-3"><div class="rounded-xl bg-[#0b100d] p-4"><p id="historyLogStreak" class="metric text-3xl font-black">0</p><p class="text-sm font-bold text-[#87948d]">current streak</p></div><div class="rounded-xl bg-[#0b100d] p-4"><p id="totalWorkouts" class="metric text-3xl font-black text-[#34d399]">0</p><p class="text-sm font-bold text-[#87948d]">workouts logged</p></div></div></article>
+        <article class="card p-5 md:p-7 xl:col-span-12"><p class="eyebrow">Timeline</p><h2 class="mt-1 text-xl font-extrabold">Recent activity</h2><div id="activityTimeline" class="mt-5 space-y-2"></div></article>
+      </div>
+    </section>
+
+    <section id="panel-mindset" data-panel="mindset" hidden>
+      <div class="mb-7"><p class="eyebrow">Accountability hub</p><h1 class="mt-1 text-3xl font-black tracking-[-.045em] md:text-4xl">Make the next choice obvious.</h1></div>
+      <div class="grid gap-4 xl:grid-cols-12">
+        <article class="card overflow-hidden border-[#ff6b2c]/50 p-6 md:p-9 xl:col-span-8"><div class="absolute -right-24 -top-20 h-72 w-72 rounded-full bg-[#ff6b2c]/[.09] blur-3xl"></div><div class="relative"><p class="eyebrow !text-[#ff8956]">The lock-in</p><blockquote id="mindsetWhyText" class="mt-5 max-w-3xl text-3xl font-black leading-[1.25] tracking-[-.04em] md:text-4xl">I’m done waiting to feel ready. I’m building strength, posture, discipline, and a body I trust—one honest day at a time.</blockquote><button id="editWhyMindset" class="btn btn-ghost mt-7">Edit my reason</button></div></article>
+        <article class="card p-6 md:p-7 xl:col-span-4"><p class="eyebrow">Today’s promise</p><h2 class="mt-1 text-xl font-extrabold">No zero days</h2><p class="mt-3 text-sm leading-6 text-[#9aa69f]">A minimum day can be 10 minutes of walking, one honest meal log, and one posture reset.</p><label id="commitmentRow" class="check-row mt-5"><input id="dailyCommitment" class="sr-only" type="checkbox"><span class="check-box" aria-hidden="true">✓</span><span><strong class="block">I kept the promise today</strong><small class="mt-1 block text-[#89968f]">Check this only after one real action.</small></span></label></article>
+        <article class="card p-6 md:p-7 xl:col-span-6"><p class="eyebrow">Operating rules</p><h2 class="mt-1 text-xl font-extrabold">When home food is hard to control</h2><ul class="mt-5 space-y-3 text-[#a7b0ab]"><li class="check-row !cursor-default"><span class="font-black text-[#34d399]">1</span><span><strong class="text-white">Own the portion.</strong> One plate, no eating from the serving dish.</span></li><li class="check-row !cursor-default"><span class="font-black text-[#34d399]">2</span><span><strong class="text-white">Anchor protein and produce.</strong> Choose the leanest protein available and add vegetables or fruit.</span></li><li class="check-row !cursor-default"><span class="font-black text-[#34d399]">3</span><span><strong class="text-white">Log before seconds.</strong> A 60-second pause makes the choice deliberate.</span></li><li class="check-row !cursor-default"><span class="font-black text-[#34d399]">4</span><span><strong class="text-white">No punishment.</strong> An over-budget meal does not require starvation or extra exercise.</span></li></ul></article>
+        <article class="card p-6 md:p-7 xl:col-span-6"><p class="eyebrow">Daily reflection</p><h2 class="mt-1 text-xl font-extrabold">One sentence of proof</h2><form id="reflectionForm" class="mt-5"><label class="text-sm font-bold text-[#aab4af]" for="reflectionText">What did you do well today?</label><textarea id="reflectionText" class="input mt-2 min-h-36 resize-y" maxlength="300" placeholder="Example: I stopped after one serving and finished my walk."></textarea><div class="mt-3 flex items-center justify-between gap-3"><span id="reflectionStatus" class="text-sm font-bold text-[#7f8c85]">Not saved today</span><button class="btn btn-secondary" type="submit">Save reflection</button></div></form></article>
+      </div>
+      <div class="mt-4 rounded-2xl border border-[#27322d] bg-[#0c110e] p-5 text-sm leading-6 text-[#89968f]"><strong class="text-[#b7c1bc]">Health note:</strong> Teen growth and calorie needs vary. This tracker supports awareness and habits; it cannot diagnose body fat or prescribe a diet. Discuss a weight-loss target with a parent or guardian and a qualified health professional. <a class="text-[#66e4b7] underline underline-offset-4" href="https://www.healthychildren.org/English/ages-stages/teen/nutrition/Pages/Fads-and-Diets.aspx" target="_blank" rel="noreferrer">AAP teen nutrition guidance</a> · <a class="text-[#66e4b7] underline underline-offset-4" href="https://food-guide.canada.ca/en/" target="_blank" rel="noreferrer">Canada’s Food Guide</a></div>
+    </section>
+  </main>
+
+  <nav class="mobile-nav nav-blur fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-[#28312d] px-1 pb-[env(safe-area-inset-bottom)]" aria-label="Mobile navigation">
+    <button class="mobile-tab active flex min-h-[66px] flex-col items-center justify-center gap-1 text-xs font-extrabold text-[#87948d]" data-tab="dashboard"><span class="text-lg">⌂</span>Today</button>
+    <button class="mobile-tab flex min-h-[66px] flex-col items-center justify-center gap-1 text-xs font-extrabold text-[#87948d]" data-tab="nutrition"><span class="text-lg">◉</span>Food</button>
+    <button class="mobile-tab flex min-h-[66px] flex-col items-center justify-center gap-1 text-xs font-extrabold text-[#87948d]" data-tab="workout"><span class="text-lg">◆</span>Train</button>
+    <button class="mobile-tab flex min-h-[66px] flex-col items-center justify-center gap-1 text-xs font-extrabold text-[#87948d]" data-tab="history"><span class="text-lg">↗</span>History</button>
+    <button class="mobile-tab flex min-h-[66px] flex-col items-center justify-center gap-1 text-xs font-extrabold text-[#87948d]" data-tab="mindset"><span class="text-lg">✦</span>Mindset</button>
+  </nav>
+
+  <dialog id="weightDialog" aria-labelledby="weightDialogTitle">
+    <form id="weightForm" class="p-6 md:p-7">
+      <div class="flex items-start justify-between gap-3"><div><p class="eyebrow">Progress check-in</p><h2 id="weightDialogTitle" class="mt-1 text-2xl font-black">Log body weight</h2></div><button type="button" class="btn btn-ghost !h-10 !w-10 !p-0" data-close-dialog aria-label="Close">×</button></div>
+      <div class="mt-6 grid gap-4 sm:grid-cols-2"><label class="text-sm font-bold text-[#aab4af]">Date<input id="weightDate" class="input mt-2" type="date" required></label><label class="text-sm font-bold text-[#aab4af]">Weight (kg)<input id="weightInput" class="input metric mt-2" type="number" min="35" max="300" step="0.1" value="95" required></label></div>
+      <label class="mt-4 block text-sm font-bold text-[#aab4af]">Optional note<input id="weightNote" class="input mt-2" type="text" maxlength="100" placeholder="Morning, after bathroom"></label>
+      <p class="mt-4 text-sm leading-6 text-[#87948d]">Use similar conditions each time. The weekly trend matters more than one reading.</p>
+      <button class="btn btn-primary mt-6 w-full" type="submit">Save weigh-in</button>
+    </form>
+  </dialog>
+
+  <dialog id="settingsDialog" aria-labelledby="settingsDialogTitle">
+    <form id="settingsForm" class="max-h-[88vh] overflow-y-auto p-6 md:p-7">
+      <div class="flex items-start justify-between gap-3"><div><p class="eyebrow">Local profile</p><h2 id="settingsDialogTitle" class="mt-1 text-2xl font-black">Tracker settings</h2></div><button type="button" class="btn btn-ghost !h-10 !w-10 !p-0" data-close-dialog aria-label="Close">×</button></div>
+      <div class="mt-6 grid gap-4 sm:grid-cols-2"><label class="text-sm font-bold text-[#aab4af]">Starting weight (kg)<input id="settingStartWeight" class="input mt-2" type="number" min="35" max="300" step="0.1" required></label><label class="text-sm font-bold text-[#aab4af]">Target weight (kg)<input id="settingTargetWeight" class="input mt-2" type="number" min="35" max="300" step="0.1" required></label><label class="text-sm font-bold text-[#aab4af]">Starting body fat estimate (%)<input id="settingBodyFat" class="input mt-2" type="number" min="3" max="70" step="0.1" required></label><label class="text-sm font-bold text-[#aab4af]">Logging budget (kcal)<input id="settingCalories" class="input mt-2" type="number" min="1200" max="6000" step="10" required></label><label class="text-sm font-bold text-[#aab4af] sm:col-span-2">Daily step minimum<input id="settingStepGoal" class="input mt-2" type="number" min="1000" max="50000" step="500" required></label></div>
+      <label class="mt-4 block text-sm font-bold text-[#aab4af]">Why I started<textarea id="settingWhy" class="input mt-2 min-h-32 resize-y" maxlength="300" required></textarea></label>
+      <div class="mt-6 flex flex-col gap-2 sm:flex-row"><button class="btn btn-primary flex-1" type="submit">Save settings</button><button id="exportData" class="btn btn-ghost" type="button">Export</button><label class="btn btn-ghost cursor-pointer">Import<input id="importData" class="sr-only" type="file" accept="application/json"></label></div>
+      <div class="mt-6 border-t border-[#2a3530] pt-5"><p class="text-sm leading-6 text-[#87948d]">Everything is stored only in this browser. Export a backup before clearing browser data or changing devices.</p><button id="resetData" class="btn btn-danger mt-4 w-full" type="button">Reset all tracker data</button></div>
+    </form>
+  </dialog>
+
+  <div id="toastRegion" class="fixed bottom-24 right-4 z-[70] flex flex-col gap-2 md:bottom-5" aria-live="polite" aria-atomic="true"></div>
+
+  <script>
+  (() => {
+    'use strict';
+    const STORAGE_KEY = 'forge85_tracker_v1';
+    const todayKey = () => { const d=new Date(); return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-'); };
+    const dateKeyFromOffset = offset => { const d=new Date(); d.setDate(d.getDate()+offset); return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-'); };
+    const uid = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36)+Math.random().toString(36).slice(2));
+    const fmt = n => Number(n||0).toLocaleString(undefined,{maximumFractionDigits:0});
+    const clamp = (n,min,max) => Math.min(max,Math.max(min,n));
+    const escapeHtml = value => String(value ?? '').replace(/[&<>'"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));
+    const parseDate = key => new Date(key+'T12:00:00');
+    const displayDate = key => parseDate(key).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});
+
+    const postureItems = [
+      {id:'head',title:'Head stacked',text:'Ears over shoulders; chin gently tucked.'},
+      {id:'ribs',title:'Ribs over pelvis',text:'Don’t flare the ribs or over-arch the low back.'},
+      {id:'shoulders',title:'Shoulders relaxed',text:'Down and slightly back—never forced.'},
+      {id:'feet',title:'Feet grounded',text:'Even pressure through heel, big toe, and little toe.'}
+    ];
+    const circuit = [
+      {id:'row',name:'One-arm dumbbell row',dose:'3 × 8–10 / side',cue:'Brace on a chair; pull elbow toward hip.'},
+      {id:'press',name:'Dumbbell floor press',dose:'3 × 6–10',cue:'Elbows 30–45° from the body; pause softly.'},
+      {id:'squat',name:'Goblet squat to chair',dose:'3 × 8–10',cue:'Sit between hips; use the chair as depth control.'},
+      {id:'rdl',name:'Dumbbell Romanian deadlift',dose:'2 × 8–10',cue:'Push hips back; keep weights close to legs.'}
+    ];
+    const pushupStages = [
+      {name:'Wall · Base',full:'Wall push-ups · Base',group:'Wall',sets:3,reps:8,wins:3,cue:'Body straight, hands at chest height, lower for two seconds.'},
+      {name:'Wall · Control',full:'Wall push-ups · Control',group:'Wall',sets:3,reps:12,wins:3,cue:'Step a little farther from the wall while keeping a rigid body line.'},
+      {name:'Knee · Base',full:'Knee push-ups · Base',group:'Knee',sets:4,reps:3,wins:3,cue:'Straight line from knees to head; chest and hips rise together.'},
+      {name:'Knee · Build',full:'Knee push-ups · Build',group:'Knee',sets:3,reps:6,wins:4,cue:'Control the bottom; stop before your hips sag or elbows flare.'},
+      {name:'Full · Singles',full:'Full push-ups · Singles',group:'Full',sets:5,reps:1,wins:4,cue:'One perfect rep at a time; reset between reps if needed.'},
+      {name:'Full · Build',full:'Full push-ups · Build',group:'Full',sets:3,reps:5,wins:5,cue:'Keep a rigid plank and finish every rep with the same form.'}
+    ];
+    const foods = [
+      {id:'roti',name:'Roti / chapati',kcal:120,serving:'1 medium',category:'South Asian'},
+      {id:'paratha',name:'Plain paratha',kcal:300,serving:'1 medium',category:'South Asian'},
+      {id:'rice',name:'Basmati rice',kcal:205,serving:'1 cup cooked',category:'South Asian'},
+      {id:'biryani',name:'Chicken biryani',kcal:600,serving:'1.5 cups',category:'South Asian'},
+      {id:'daal',name:'Daal',kcal:230,serving:'1 cup',category:'South Asian'},
+      {id:'chana',name:'Chana masala',kcal:280,serving:'1 cup',category:'South Asian'},
+      {id:'chicken-curry',name:'Chicken curry',kcal:350,serving:'1 cup',category:'South Asian'},
+      {id:'butter-chicken',name:'Butter chicken',kcal:550,serving:'1 cup',category:'South Asian'},
+      {id:'aloo-gobi',name:'Aloo gobi',kcal:220,serving:'1 cup',category:'South Asian'},
+      {id:'naan',name:'Naan',kcal:300,serving:'1 piece',category:'South Asian'},
+      {id:'samosa',name:'Vegetable samosa',kcal:260,serving:'1 piece',category:'South Asian'},
+      {id:'pakora',name:'Pakora',kcal:300,serving:'5 pieces',category:'South Asian'},
+      {id:'seekh',name:'Seekh kebab',kcal:180,serving:'1 kebab',category:'South Asian'},
+      {id:'tandoori',name:'Tandoori chicken',kcal:220,serving:'1 leg quarter',category:'South Asian'},
+      {id:'raita',name:'Raita',kcal:100,serving:'½ cup',category:'South Asian'},
+      {id:'chai',name:'Milk chai with sugar',kcal:120,serving:'1 mug',category:'South Asian'},
+      {id:'lassi',name:'Sweet lassi',kcal:250,serving:'1 cup',category:'South Asian'},
+      {id:'egg',name:'Egg',kcal:75,serving:'1 large',category:'Protein & staples'},
+      {id:'chicken',name:'Chicken breast',kcal:250,serving:'150 g cooked',category:'Protein & staples'},
+      {id:'tuna',name:'Canned tuna',kcal:180,serving:'1 can drained',category:'Protein & staples'},
+      {id:'greek-yogurt',name:'Plain Greek yogurt',kcal:130,serving:'1 cup',category:'Protein & staples'},
+      {id:'milk',name:'2% milk',kcal:130,serving:'1 cup',category:'Protein & staples'},
+      {id:'oats',name:'Oatmeal',kcal:150,serving:'½ cup dry',category:'Protein & staples'},
+      {id:'bread',name:'Whole-wheat bread',kcal:90,serving:'1 slice',category:'Protein & staples'},
+      {id:'peanut-butter',name:'Peanut butter',kcal:190,serving:'2 tbsp',category:'Protein & staples'},
+      {id:'banana',name:'Banana',kcal:105,serving:'1 medium',category:'Fruit & sides'},
+      {id:'apple',name:'Apple',kcal:95,serving:'1 medium',category:'Fruit & sides'},
+      {id:'orange',name:'Orange',kcal:70,serving:'1 medium',category:'Fruit & sides'},
+      {id:'dates',name:'Dates',kcal:130,serving:'4 dates',category:'Fruit & sides'},
+      {id:'almonds',name:'Almonds',kcal:170,serving:'28 g',category:'Fruit & sides'},
+      {id:'veg',name:'Mixed vegetables',kcal:90,serving:'1.5 cups',category:'Fruit & sides'},
+      {id:'salad',name:'Side salad + dressing',kcal:160,serving:'1 bowl',category:'Fruit & sides'},
+      {id:'chocolate',name:'Chocolate bar',kcal:250,serving:'1 bar',category:'Snacks & drinks'},
+      {id:'chips',name:'Potato chips',kcal:280,serving:'1 small bag',category:'Snacks & drinks'},
+      {id:'cookies',name:'Cookies',kcal:160,serving:'2 cookies',category:'Snacks & drinks'},
+      {id:'ice-cream',name:'Ice cream',kcal:270,serving:'1 cup',category:'Snacks & drinks'},
+      {id:'soda',name:'Regular soda',kcal:150,serving:'355 mL can',category:'Snacks & drinks'},
+      {id:'juice',name:'Fruit juice',kcal:120,serving:'1 cup',category:'Snacks & drinks'},
+      {id:'pizza',name:'Pizza',kcal:285,serving:'1 slice',category:'Snacks & drinks'},
+      {id:'burger',name:'Fast-food burger',kcal:520,serving:'1 burger',category:'Snacks & drinks'},
+      {id:'fries',name:'French fries',kcal:360,serving:'1 medium',category:'Snacks & drinks'},
+      {id:'donut',name:'Donut',kcal:280,serving:'1 donut',category:'Snacks & drinks'},
+      {id:'noodles',name:'Instant noodles',kcal:380,serving:'1 package',category:'Snacks & drinks'},
+      {id:'energy-drink',name:'Energy drink',kcal:110,serving:'250 mL',category:'Snacks & drinks'}
+    ];
+
+    function defaultState(){ return {
+      version:1,
+      profile:{startWeight:95,targetWeight:85,startBodyFat:34.3,calorieTarget:2000,stepGoal:8000,why:'I’m done waiting to feel ready. I’m building strength, posture, discipline, and a body I trust—one honest day at a time.'},
+      weights:[], foodLogs:{}, daily:{}, workouts:{}, reflections:{},
+      pushup:{stage:0,successfulSessions:0}, timer:{running:false,startedAt:null,accumulated:0}
+    }; }
+    function loadState(){
+      try {
+        const raw=localStorage.getItem(STORAGE_KEY); if(!raw) return defaultState();
+        const saved=JSON.parse(raw), base=defaultState();
+        return {...base,...saved,profile:{...base.profile,...saved.profile},pushup:{...base.pushup,...saved.pushup},timer:{...base.timer,...saved.timer},weights:Array.isArray(saved.weights)?saved.weights:[],foodLogs:saved.foodLogs||{},daily:saved.daily||{},workouts:saved.workouts||{},reflections:saved.reflections||{}};
+      } catch(e){ return defaultState(); }
+    }
+    let state=loadState();
+    let currentTab='dashboard';
+    let undoAction=null;
+    let toastTimer=null;
+    const $=id=>document.getElementById(id);
+    function saveState(){ try { localStorage.setItem(STORAGE_KEY,JSON.stringify(state)); } catch(e){ toast('Could not save locally. Export your data and check browser storage.','error'); } }
+    function dayData(key=todayKey()){ state.daily[key] ||= {steps:0,posture:{},commitment:false}; state.daily[key].posture ||= {}; return state.daily[key]; }
+    function dayWorkouts(key=todayKey()){ state.workouts[key] ||= {}; return state.workouts[key]; }
+    function todayFoods(){ state.foodLogs[todayKey()] ||= []; return state.foodLogs[todayKey()]; }
+    function caloriesOn(key=todayKey()){ return (state.foodLogs[key]||[]).reduce((sum,x)=>sum+Number(x.kcal||0),0); }
+    function hasWorkout(key){ const w=state.workouts[key]||{}; return !!(w.pushup||w.circuit||w.treadmill); }
+    function isLogged(key){ const d=state.daily[key]||{}; return state.weights.some(w=>w.date===key)||(state.foodLogs[key]||[]).length>0||Number(d.steps)>0||Object.values(d.posture||{}).some(Boolean)||d.commitment||hasWorkout(key)||!!state.reflections[key]; }
+    function streakFor(test){ let offset=test(todayKey())?0:-1,count=0; if(offset===-1&&!test(dateKeyFromOffset(-1))) return 0; while(test(dateKeyFromOffset(offset))){ count++; offset--; if(count>5000) break; } return count; }
+    function logStreak(){ return streakFor(isLogged); }
+    function stepStreak(){ return streakFor(k=>Number(state.daily[k]?.steps||0)>=Number(state.profile.stepGoal||8000)); }
+    function totalWorkoutCount(){ return Object.values(state.workouts).filter(w=>w&&(w.pushup||w.circuit||w.treadmill)).length; }
+
+    function toast(message,type='success',undo=null){
+      const region=$('toastRegion'); region.innerHTML='';
+      const el=document.createElement('div'); el.className='toast';
+      const label=document.createElement('span'); label.className='font-bold text-sm'; label.textContent=message; el.append(label);
+      if(undo){ const b=document.createElement('button'); b.className='text-sm font-black text-[#ff8956] underline underline-offset-4'; b.textContent='Undo'; b.onclick=()=>{undo();el.remove();renderAll();}; el.append(b); }
+      if(type==='error') el.style.borderColor='#7f1d1d';
+      region.append(el); clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.remove(),4200);
+    }
+
+    function showTab(name){
+      currentTab=name;
+      document.querySelectorAll('[data-panel]').forEach(p=>p.hidden=p.dataset.panel!==name);
+      document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));
+      window.scrollTo({top:0,behavior:'smooth'});
+      if(name==='history') renderHistory();
+      if(name==='nutrition') renderNutrition();
+      if(name==='workout') renderWorkout();
+    }
+
+    function latestWeight(){ if(!state.weights.length) return Number(state.profile.startWeight); return [...state.weights].sort((a,b)=>a.date.localeCompare(b.date)||a.createdAt-b.createdAt).at(-1).weight; }
+    function weeklyPace(){
+      const logs=[...state.weights].sort((a,b)=>a.date.localeCompare(b.date)); if(logs.length<2) return null;
+      const latest=logs.at(-1), targetTime=parseDate(latest.date).getTime()-6*86400000;
+      const prior=[...logs].reverse().find(w=>parseDate(w.date).getTime()<=targetTime); if(!prior) return null;
+      const days=Math.max(1,(parseDate(latest.date)-parseDate(prior.date))/86400000); return (Number(prior.weight)-Number(latest.weight))*7/days;
+    }
+    function renderDashboard(){
+      const today=new Date(); $('todayDate').textContent=today.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
+      const current=Number(latestWeight()), start=Number(state.profile.startWeight), target=Number(state.profile.targetWeight), total=start-target;
+      const lost=Math.max(0,start-current), remaining=Math.max(0,current-target), pct=total>0?clamp(lost/total*100,0,100):0;
+      $('currentWeight').textContent=current.toFixed(1); $('weightLost').textContent=lost.toFixed(1); $('weightRemaining').textContent=remaining.toFixed(1); $('startBf').textContent=Number(state.profile.startBodyFat).toFixed(1);
+      $('targetWeightHeading').textContent=target.toFixed(1)+' kg'; $('weightProgressLabel').textContent=Math.round(pct)+'% to checkpoint'; $('weightRangeLabel').textContent=start.toFixed(0)+' → '+target.toFixed(0)+' kg'; $('weightProgress').style.width=pct+'%'; $('weightProgress').parentElement.setAttribute('aria-valuenow',Math.round(pct));
+      const pace=weeklyPace(); $('paceNote').textContent=pace===null?'Log weigh-ins under similar conditions. Compare weekly trends, not daily noise.':pace>0.9?`Recent trend: about ${pace.toFixed(1)} kg/week down. That is fast for a teen—pause and check in with a qualified health professional.`:pace<-0.3?`Recent trend: about ${Math.abs(pace).toFixed(1)} kg/week up. Review portions and keep logging honestly.`:`Recent trend: ${pace>=0?'down ':'up '}${Math.abs(pace).toFixed(1)} kg/week. Focus on the multi-week direction.`;
+      const ls=logStreak(), ss=stepStreak(); $('logStreak').textContent=ls; $('stepStreak').textContent=ss; $('headerLogStreak').textContent=ls+'-day log streak'; $('headerStepStreak').textContent=ss+'-day step streak';
+      const calories=caloriesOn(), calTarget=Number(state.profile.calorieTarget), calRemain=calTarget-calories, calPct=clamp(calories/calTarget*100,0,100);
+      $('dashCaloriesRemaining').textContent=fmt(Math.abs(calRemain)); $('dashCaloriesRemaining').parentElement.lastElementChild.textContent=calRemain<0?'kcal over':'kcal left'; $('dashCaloriesRemaining').style.color=calRemain<0?'#fb7185':'#f5f7f6';
+      $('dashCaloriesLogged').textContent=fmt(calories); $('dashCalorieTarget').textContent=fmt(calTarget); $('dashFoodCount').textContent=todayFoods().length; $('dashboardCalorieRing').style.setProperty('--ring',calPct+'%');
+      const d=dayData(), steps=Number(d.steps||0), stepGoal=Number(state.profile.stepGoal); $('stepsInput').value=steps; $('stepPercent').textContent=Math.round(clamp(steps/stepGoal*100,0,100))+'%'; $('stepProgress').style.width=clamp(steps/stepGoal*100,0,100)+'%'; $('stepGoalText').textContent=fmt(stepGoal);
+      $('whyText').textContent=state.profile.why; $('mindsetWhyText').textContent=state.profile.why;
+      renderPosture();
+      const s=pushupStages[clamp(Number(state.pushup.stage),0,pushupStages.length-1)]; $('nextWorkoutTitle').textContent=s.full; $('nextWorkoutBadge').textContent='Level '+(Number(state.pushup.stage)+1); $('nextWorkoutPrescription').textContent=s.sets+' × '+s.reps; $('nextWorkoutCue').textContent=s.cue;
+      const checks=[state.weights.some(w=>w.date===todayKey()),calories>0&&calories<=calTarget,steps>=stepGoal,postureItems.every(x=>!!d.posture[x.id]),hasWorkout(todayKey())]; const score=checks.filter(Boolean).length; $('dailyScore').textContent=score+' / 5'; $('dailyScoreBar').style.width=(score/5*100)+'%';
+    }
+    function renderPosture(){
+      const d=dayData(), count=postureItems.filter(x=>d.posture[x.id]).length; $('postureCount').textContent=count+' / 4 checked';
+      $('postureChecklist').innerHTML=postureItems.map(item=>`<label class="check-row ${d.posture[item.id]?'done':''}"><input class="sr-only posture-input" type="checkbox" data-posture="${item.id}" ${d.posture[item.id]?'checked':''}><span class="check-box" aria-hidden="true">✓</span><span><strong class="block">${item.title}</strong><small class="mt-1 block leading-5 text-[#89968f]">${item.text}</small></span></label>`).join('');
+    }
+    function renderNutrition(){
+      const used=caloriesOn(), target=Number(state.profile.calorieTarget), remaining=target-used, pct=clamp(used/target*100,0,100);
+      $('nutritionCalorieRing').style.setProperty('--ring',pct+'%'); $('nutritionCaloriesRemaining').textContent=fmt(Math.abs(remaining)); $('nutritionCaloriesRemaining').nextElementSibling.textContent=remaining<0?'kcal over':'kcal remaining'; $('nutritionCaloriesRemaining').style.color=remaining<0?'#fb7185':'#f5f7f6'; $('nutritionLogged').textContent=fmt(used); $('nutritionTarget').textContent=fmt(target);
+      $('nutritionBudgetMessage').textContent=used===0?'Full budget available':remaining<0?`${fmt(Math.abs(remaining))} kcal over — log it and resume normally`:`${Math.round(pct)}% of the benchmark used`;
+      const list=todayFoods(); $('todayFoodCount').textContent=list.length;
+      $('todayFoodList').innerHTML=list.length?list.slice().reverse().map(x=>`<div class="flex items-center justify-between gap-3 rounded-xl border border-[#27322d] bg-[#0b100d] p-3"><div class="min-w-0"><p class="truncate font-extrabold">${escapeHtml(x.name)}</p><p class="text-sm font-semibold text-[#829088]">${escapeHtml(x.meal)} · ${new Date(x.createdAt).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}</p></div><div class="flex items-center gap-3"><strong class="whitespace-nowrap">${fmt(x.kcal)} kcal</strong><button class="grid h-9 w-9 place-items-center rounded-lg border border-[#3a312e] text-[#fda4af] hover:bg-red-950/30" data-delete-food="${escapeHtml(x.id)}" aria-label="Delete ${escapeHtml(x.name)}">×</button></div></div>`).join(''):'<div class="rounded-2xl border border-dashed border-[#35413b] p-7 text-center"><p class="font-extrabold">Nothing logged yet</p><p class="mt-1 text-sm text-[#829088]">Choose a food below or add a custom entry.</p></div>';
+      renderFoods();
+    }
+    function renderFoods(){
+      const q=$('foodSearch').value.trim().toLowerCase(), cat=$('foodCategory').value;
+      const filtered=foods.filter(f=>(cat==='all'||f.category===cat)&&(!q||(f.name+' '+f.serving).toLowerCase().includes(q)));
+      $('foodGrid').innerHTML=filtered.length?filtered.map(f=>`<button class="food-card" data-food-id="${f.id}"><span class="pill w-fit">${escapeHtml(f.category)}</span><strong class="mt-3 text-lg leading-6">${escapeHtml(f.name)}</strong><span class="mt-1 text-sm font-semibold text-[#829088]">${escapeHtml(f.serving)}</span><span class="mt-auto pt-4 text-xl font-black text-[#ff8956]">${fmt(f.kcal)} kcal <span class="text-sm">+</span></span></button>`).join(''):'<p class="col-span-full rounded-2xl border border-dashed border-[#35413b] p-7 text-center text-[#91a099]">No foods match that search.</p>';
+    }
+    function addFood(item){ const entry={id:uid(),name:item.name,kcal:Number(item.kcal),meal:item.meal||$('quickMeal').value,createdAt:Date.now()}; todayFoods().push(entry); saveState(); toast(`${entry.name} added · ${fmt(entry.kcal)} kcal`,'success',()=>{const list=todayFoods(),i=list.findIndex(x=>x.id===entry.id);if(i>-1){list.splice(i,1);saveState();}}); renderAll(); }
+
+    function renderWorkout(){
+      const idx=clamp(Number(state.pushup.stage),0,pushupStages.length-1), s=pushupStages[idx];
+      $('pushupStageSelect').innerHTML=pushupStages.map((x,i)=>`<option value="${i}" ${i===idx?'selected':''}>Level ${i+1}: ${x.name}</option>`).join('');
+      $('pushupStages').innerHTML=pushupStages.map((x,i)=>`<div class="stage ${i===idx?'active':''} ${i<idx?'complete':''}"><div class="flex items-center justify-between gap-2"><span class="eyebrow">Level ${i+1}</span><span>${i<idx?'✓':i===idx?'●':'○'}</span></div><p class="mt-2 font-extrabold">${x.name}</p><p class="mt-1 text-sm font-bold text-[#87948d]">${x.sets} × ${x.reps}</p></div>`).join('');
+      $('pushupWorkoutName').textContent=s.full; $('pushupSessionProgress').textContent=state.pushup.successfulSessions+' / '+s.wins+' wins'; $('pushupTarget').textContent=s.sets+' × '+s.reps; $('pushupCue').textContent=s.cue; $('pushupSets').value=s.sets; $('pushupReps').value=s.reps;
+      const done=dayWorkouts().circuit?.exercises||[];
+      $('circuitList').innerHTML=circuit.map(x=>`<label class="flex items-center gap-3 rounded-xl border border-[#27322d] bg-[#0b100d] p-4"><input class="workout-check h-5 w-5 accent-[#34d399]" type="checkbox" data-exercise="${x.id}" ${done.includes(x.id)?'checked':''}><span class="min-w-0 flex-1"><span class="flex flex-col justify-between gap-1 sm:flex-row sm:gap-3"><strong>${x.name}</strong><b class="whitespace-nowrap text-[#ff8956]">${x.dose}</b></span><small class="mt-1 block leading-5 text-[#87948d]">${x.cue}</small></span></label>`).join('');
+      const tw=dayWorkouts().treadmill; if(tw){$('treadmillMinutes').value=tw.minutes;$('treadmillSteps').value=tw.steps;$('treadmillIncline').value=tw.incline;}
+      renderTimer();
+    }
+    function elapsedSeconds(){ const t=state.timer; return Number(t.accumulated||0)+(t.running&&t.startedAt?Math.floor((Date.now()-t.startedAt)/1000):0); }
+    function renderTimer(){ const total=Math.max(0,elapsedSeconds()), m=Math.floor(total/60),s=total%60; $('timerDisplay').textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0'); $('timerStatus').textContent=state.timer.running?'Walking':'Ready'; $('startTimer').disabled=state.timer.running; $('pauseTimer').disabled=!state.timer.running; }
+
+    function renderHistory(){
+      const logs=[...state.weights].sort((a,b)=>a.date.localeCompare(b.date)); $('weightLogCount').textContent=logs.length+' log'+(logs.length===1?'':'s'); $('historyLogStreak').textContent=logStreak(); $('totalWorkouts').textContent=totalWorkoutCount();
+      if(!logs.length){ $('weightChart').innerHTML='<div class="grid min-h-[230px] place-items-center text-center"><div><p class="text-lg font-extrabold">No weigh-ins yet</p><p class="mt-1 text-sm text-[#829088]">Your trend line will appear after you log weight.</p><button class="btn btn-primary mt-4" data-open-weight>Log first weight</button></div></div>'; }
+      else {
+        const w=760,h=250,pad=38, values=logs.map(x=>Number(x.weight)), min=Math.min(...values,Number(state.profile.targetWeight))-1,max=Math.max(...values,Number(state.profile.startWeight))+1,range=Math.max(1,max-min);
+        const pts=logs.map((x,i)=>({x:logs.length===1?w/2:pad+i*(w-2*pad)/(logs.length-1),y:pad+(max-Number(x.weight))/range*(h-2*pad),v:Number(x.weight),date:x.date}));
+        const line=pts.map(p=>p.x+','+p.y).join(' '); const targetY=pad+(max-Number(state.profile.targetWeight))/range*(h-2*pad);
+        $('weightChart').innerHTML=`<svg viewBox="0 0 ${w} ${h}" class="h-[250px] w-full" role="img" aria-label="Weight history line chart"><defs><linearGradient id="chartFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff6b2c" stop-opacity=".25"/><stop offset="1" stop-color="#ff6b2c" stop-opacity="0"/></linearGradient></defs><line x1="${pad}" y1="${targetY}" x2="${w-pad}" y2="${targetY}" stroke="#34d399" stroke-dasharray="6 6" opacity=".65"/><text x="${w-pad}" y="${targetY-7}" text-anchor="end" fill="#7ee6bd" font-size="12">target ${Number(state.profile.targetWeight).toFixed(1)} kg</text>${pts.length>1?`<polygon points="${pad},${h-pad} ${line} ${w-pad},${h-pad}" fill="url(#chartFill)"/><polyline points="${line}" fill="none" stroke="#ff6b2c" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`:''}${pts.map(p=>`<circle cx="${p.x}" cy="${p.y}" r="6" fill="#ff6b2c" stroke="#1b110d" stroke-width="3"><title>${displayDate(p.date)}: ${p.v.toFixed(1)} kg</title></circle>`).join('')}<text x="${pad}" y="${h-10}" fill="#7f8b85" font-size="12">${escapeHtml(displayDate(logs[0].date))}</text><text x="${w-pad}" y="${h-10}" fill="#7f8b85" text-anchor="end" font-size="12">${escapeHtml(displayDate(logs.at(-1).date))}</text></svg>`;
+      }
+      $('heatmap').innerHTML=Array.from({length:21},(_,i)=>{const key=dateKeyFromOffset(i-20),d=state.daily[key]||{},score=[isLogged(key),Number(d.steps)>=Number(state.profile.stepGoal),postureItems.every(x=>d.posture?.[x.id]),hasWorkout(key)].filter(Boolean).length;return `<div class="heat ${score>=3?'heat-3':score===2?'heat-2':score===1?'heat-1':''}" title="${displayDate(key)} · ${score} signals"></div>`;}).join('');
+      const events=[];
+      state.weights.forEach(x=>events.push({date:x.date,time:x.createdAt||parseDate(x.date).getTime(),title:`Weight · ${Number(x.weight).toFixed(1)} kg`,detail:x.note||'Weigh-in logged'}));
+      Object.entries(state.foodLogs).forEach(([date,list])=>{if(list.length)events.push({date,time:Math.max(...list.map(x=>x.createdAt||0)),title:`Food · ${fmt(list.reduce((s,x)=>s+Number(x.kcal),0))} kcal`,detail:`${list.length} entr${list.length===1?'y':'ies'}`});});
+      Object.entries(state.workouts).forEach(([date,w])=>{const labels=[w.pushup&&'push-ups',w.circuit&&'dumbbells',w.treadmill&&'treadmill'].filter(Boolean);if(labels.length)events.push({date,time:Math.max(w.pushup?.createdAt||0,w.circuit?.createdAt||0,w.treadmill?.createdAt||0),title:'Training · '+labels.join(', '),detail:'Session saved'});});
+      events.sort((a,b)=>b.date.localeCompare(a.date)||b.time-a.time); $('activityTimeline').innerHTML=events.length?events.slice(0,12).map(e=>`<div class="flex items-center justify-between gap-4 rounded-xl border border-[#27322d] bg-[#0b100d] p-4"><div><p class="font-extrabold">${escapeHtml(e.title)}</p><p class="mt-1 text-sm text-[#829088]">${escapeHtml(e.detail)}</p></div><time class="whitespace-nowrap text-sm font-bold text-[#96a29c]">${escapeHtml(displayDate(e.date))}</time></div>`).join(''):'<div class="rounded-2xl border border-dashed border-[#35413b] p-7 text-center text-[#87948d]">Your first entries will build this timeline.</div>';
+    }
+    function renderMindset(){ const d=dayData(); $('dailyCommitment').checked=!!d.commitment; $('commitmentRow').classList.toggle('done',!!d.commitment); $('reflectionText').value=state.reflections[todayKey()]||''; $('reflectionStatus').textContent=state.reflections[todayKey()]?'Saved today':'Not saved today'; }
+    function renderSettings(){ $('settingStartWeight').value=state.profile.startWeight; $('settingTargetWeight').value=state.profile.targetWeight; $('settingBodyFat').value=state.profile.startBodyFat; $('settingCalories').value=state.profile.calorieTarget; $('settingStepGoal').value=state.profile.stepGoal; $('settingWhy').value=state.profile.why; }
+    function renderAll(){ renderDashboard(); renderNutrition(); renderWorkout(); renderHistory(); renderMindset(); }
+
+    function openWeightDialog(){ $('weightDate').value=todayKey(); $('weightInput').value=Number(latestWeight()).toFixed(1); $('weightNote').value=''; $('weightDialog').showModal(); setTimeout(()=>$('weightInput').select(),50); }
+    function openSettings(){ renderSettings(); $('settingsDialog').showModal(); }
+    function exportData(){ const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='forge85-backup-'+todayKey()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);toast('Backup exported'); }
+    function importData(file){ const reader=new FileReader(); reader.onload=()=>{try{const parsed=JSON.parse(reader.result);if(!parsed.profile||!Array.isArray(parsed.weights))throw new Error('shape');state={...defaultState(),...parsed,profile:{...defaultState().profile,...parsed.profile}};saveState();renderAll();toast('Backup imported');$('settingsDialog').close();}catch(e){toast('That file is not a valid Forge 85 backup.','error');}};reader.readAsText(file); }
+
+    document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>showTab(b.dataset.tab)));
+    document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>showTab(b.dataset.go)));
+    document.querySelectorAll('[data-close-dialog]').forEach(b=>b.addEventListener('click',()=>b.closest('dialog').close()));
+    document.querySelectorAll('dialog').forEach(d=>d.addEventListener('click',e=>{if(e.target===d)d.close();}));
+    document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('dialog[open]').forEach(d=>d.close());});
+    $('openWeightLog').addEventListener('click',openWeightDialog); $('openSettings').addEventListener('click',openSettings); $('editWhy').addEventListener('click',openSettings); $('editWhyMindset').addEventListener('click',openSettings);
+    $('stepsForm').addEventListener('submit',e=>{e.preventDefault();dayData().steps=clamp(Number($('stepsInput').value),0,100000);saveState();renderAll();toast('Steps saved');});
+    $('postureChecklist').addEventListener('change',e=>{if(!e.target.matches('[data-posture]'))return;dayData().posture[e.target.dataset.posture]=e.target.checked;saveState();renderAll();});
+    $('weightForm').addEventListener('submit',e=>{e.preventDefault();const date=$('weightDate').value,weight=Number($('weightInput').value),note=$('weightNote').value.trim();if(!date||weight<35||weight>300){toast('Enter a valid date and weight.','error');return;}const existing=state.weights.find(w=>w.date===date);if(existing){existing.weight=weight;existing.note=note;existing.createdAt=Date.now();}else state.weights.push({id:uid(),date,weight,note,createdAt:Date.now()});saveState();$('weightDialog').close();renderAll();toast(existing?'Weigh-in updated':'Weigh-in saved');});
+    $('settingsForm').addEventListener('submit',e=>{e.preventDefault();const start=Number($('settingStartWeight').value),target=Number($('settingTargetWeight').value),cal=Number($('settingCalories').value);if(target>=start){toast('Target weight must be below starting weight.','error');return;}state.profile={...state.profile,startWeight:start,targetWeight:target,startBodyFat:Number($('settingBodyFat').value),calorieTarget:cal,stepGoal:Number($('settingStepGoal').value),why:$('settingWhy').value.trim()};saveState();$('settingsDialog').close();renderAll();toast('Settings saved');});
+    $('foodSearch').addEventListener('input',renderFoods); $('foodCategory').addEventListener('change',renderFoods);
+    $('foodGrid').addEventListener('click',e=>{const b=e.target.closest('[data-food-id]');if(!b)return;const food=foods.find(x=>x.id===b.dataset.foodId);if(food)addFood(food);});
+    $('todayFoodList').addEventListener('click',e=>{const b=e.target.closest('[data-delete-food]');if(!b)return;const list=todayFoods(),i=list.findIndex(x=>x.id===b.dataset.deleteFood);if(i<0)return;const [removed]=list.splice(i,1);saveState();renderAll();toast('Food entry removed','success',()=>{todayFoods().push(removed);saveState();});});
+    $('customFoodForm').addEventListener('submit',e=>{e.preventDefault();addFood({name:$('customFoodName').value.trim(),kcal:Number($('customFoodCalories').value),meal:$('customFoodMeal').value});e.target.reset();$('customFoodCalories').value=500;$('customFoodMeal').value='Snack';});
+    $('scrollToCustomFood').addEventListener('click',()=>{$('customFoodCard').scrollIntoView({behavior:'smooth'});setTimeout(()=>$('customFoodName').focus(),350);});
+    $('clearTodayFood').addEventListener('click',()=>{const list=todayFoods();if(!list.length){toast('No food entries to clear.');return;}if(!confirm('Clear every food entry for today?'))return;const backup=list.slice();state.foodLogs[todayKey()]=[];saveState();renderAll();toast('Today’s food log cleared','success',()=>{state.foodLogs[todayKey()]=backup;saveState();});});
+    $('pushupStageSelect').addEventListener('change',e=>{const next=Number(e.target.value);if(next===state.pushup.stage)return;if(!confirm('Change the active push-up level? This resets level wins to 0.')){renderWorkout();return;}state.pushup.stage=next;state.pushup.successfulSessions=0;saveState();renderAll();toast('Push-up level updated');});
+    $('pushupForm').addEventListener('submit',e=>{e.preventDefault();const idx=Number(state.pushup.stage),s=pushupStages[idx],sets=Number($('pushupSets').value),reps=Number($('pushupReps').value),effort=$('pushupEffort').value,success=sets>=s.sets&&reps>=s.reps&&effort!=='form-broke';dayWorkouts().pushup={stage:idx,stageName:s.full,sets,reps,effort,success,createdAt:Date.now()};if(success){state.pushup.successfulSessions++;if(state.pushup.successfulSessions>=s.wins&&idx<pushupStages.length-1){state.pushup.stage++;state.pushup.successfulSessions=0;toast('Level unlocked: '+pushupStages[idx+1].full);}else toast('Clean session logged · level win +1');}else toast('Session logged. Keep the level and protect your form.');saveState();renderAll();});
+    $('logCircuit').addEventListener('click',()=>{const checked=[...document.querySelectorAll('[data-exercise]:checked')].map(x=>x.dataset.exercise);if(!checked.length){toast('Check at least one completed exercise.','error');return;}dayWorkouts().circuit={exercises:checked,createdAt:Date.now()};saveState();renderAll();toast('Dumbbell circuit saved');});
+    $('startTimer').addEventListener('click',()=>{if(state.timer.running)return;state.timer.running=true;state.timer.startedAt=Date.now();saveState();renderTimer();});
+    $('pauseTimer').addEventListener('click',()=>{if(!state.timer.running)return;state.timer.accumulated=elapsedSeconds();state.timer.running=false;state.timer.startedAt=null;saveState();$('treadmillMinutes').value=Math.round(state.timer.accumulated/60);renderTimer();});
+    $('resetTimer').addEventListener('click',()=>{state.timer={running:false,startedAt:null,accumulated:0};saveState();renderTimer();});
+    $('treadmillForm').addEventListener('submit',e=>{e.preventDefault();const minutes=Number($('treadmillMinutes').value),steps=Number($('treadmillSteps').value),incline=Number($('treadmillIncline').value);dayWorkouts().treadmill={minutes,steps,incline,createdAt:Date.now()};if(steps>Number(dayData().steps||0))dayData().steps=steps;saveState();renderAll();toast('Treadmill walk saved');});
+    $('dailyCommitment').addEventListener('change',e=>{dayData().commitment=e.target.checked;saveState();renderAll();});
+    $('reflectionForm').addEventListener('submit',e=>{e.preventDefault();const text=$('reflectionText').value.trim();if(text)state.reflections[todayKey()]=text;else delete state.reflections[todayKey()];saveState();renderAll();toast(text?'Reflection saved':'Reflection cleared');});
+    $('exportData').addEventListener('click',exportData); $('exportDataTop').addEventListener('click',exportData); $('importData').addEventListener('change',e=>{if(e.target.files[0])importData(e.target.files[0]);e.target.value='';});
+    $('resetData').addEventListener('click',()=>{if(!confirm('Reset all weights, food, workouts, streaks, and settings? Export first if you want a backup.'))return;if(!confirm('This cannot be undone. Reset everything?'))return;localStorage.removeItem(STORAGE_KEY);state=defaultState();$('settingsDialog').close();renderAll();toast('Tracker reset');});
+    document.addEventListener('click',e=>{if(e.target.closest('[data-open-weight]'))openWeightDialog();});
+    setInterval(()=>{if(state.timer.running)renderTimer();},1000);
+
+    function registerWebMCP(){
+      const context=document.modelContext; if(!context?.registerTool)return;
+      const tools=[
+        {name:'read_today_summary',title:'Read today summary',description:'Read today’s weight, calories, steps, posture checks, and streaks without changing data.',inputSchema:{type:'object',properties:{},additionalProperties:false},annotations:{readOnlyHint:true,untrustedContentHint:false},execute:input=>{if(!input||typeof input!=='object'||Array.isArray(input)||Object.keys(input).length)throw new Error('This tool accepts an empty object only.');return{date:todayKey(),weightKg:latestWeight(),caloriesLogged:caloriesOn(),calorieTarget:state.profile.calorieTarget,steps:dayData().steps,stepGoal:state.profile.stepGoal,postureChecks:Object.values(dayData().posture).filter(Boolean).length,logStreak:logStreak(),stepStreak:stepStreak()};}},
+        {name:'log_body_weight',title:'Log body weight',description:'Save or update a body-weight entry for a date and refresh the visible tracker.',inputSchema:{type:'object',properties:{date:{type:'string',pattern:'^\\d{4}-\\d{2}-\\d{2}$'},weightKg:{type:'number',minimum:35,maximum:300},note:{type:'string',maxLength:100}},required:['date','weightKg'],additionalProperties:false},annotations:{readOnlyHint:false,untrustedContentHint:false},execute:input=>{if(!input||typeof input.weightKg!=='number'||!/^\d{4}-\d{2}-\d{2}$/.test(input.date))throw new Error('Valid date and weightKg are required.');let row=state.weights.find(w=>w.date===input.date);if(row)Object.assign(row,{weight:input.weightKg,note:input.note||'',createdAt:Date.now()});else state.weights.push({id:uid(),date:input.date,weight:input.weightKg,note:input.note||'',createdAt:Date.now()});saveState();renderAll();return{saved:true,date:input.date,weightKg:input.weightKg};}},
+        {name:'add_food_entry',title:'Add food entry',description:'Add one food entry to today’s log and update the calorie budget.',inputSchema:{type:'object',properties:{name:{type:'string',minLength:1,maxLength:80},calories:{type:'number',minimum:1,maximum:10000},meal:{type:'string',enum:['Breakfast','Lunch','Dinner','Snack']}},required:['name','calories','meal'],additionalProperties:false},annotations:{readOnlyHint:false,untrustedContentHint:true},execute:input=>{if(!input||!input.name||!Number.isFinite(input.calories))throw new Error('Valid name, calories, and meal are required.');addFood({name:String(input.name).slice(0,80),kcal:input.calories,meal:input.meal});return{saved:true,totalCalories:caloriesOn(),remainingCalories:Number(state.profile.calorieTarget)-caloriesOn()};}},
+        {name:'save_daily_steps',title:'Save daily steps',description:'Save today’s total step count and update the movement streak.',inputSchema:{type:'object',properties:{steps:{type:'integer',minimum:0,maximum:100000}},required:['steps'],additionalProperties:false},annotations:{readOnlyHint:false,untrustedContentHint:false},execute:input=>{if(!Number.isInteger(input?.steps)||input.steps<0||input.steps>100000)throw new Error('steps must be an integer from 0 to 100000.');dayData().steps=input.steps;saveState();renderAll();return{saved:true,steps:input.steps,goalMet:input.steps>=Number(state.profile.stepGoal)};}}
+      ];
+      tools.forEach(tool=>{try{Promise.resolve(context.registerTool(tool)).catch(()=>{});}catch(e){}});
+    }
+    renderAll(); registerWebMCP();
+  })();
+  </script>
+</body>
+</html>

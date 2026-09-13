@@ -8,4 +8,4 @@ All weigh-ins, food entries, workouts, settings, and reflections are saved in th
 
 ## GitHub Pages deployment
 
-The workflow in `.github/workflows/pages.yml` publishes the contents of `site/` whenever the `main` branch changes. In the repository's **Settings → Pages**, set the deployment source to **GitHub Actions** if GitHub does not select it automatically.
+GitHub Pages publishes `index.html` from the root of the `main` branch. Any committed update to that file becomes the live app.
